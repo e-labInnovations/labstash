@@ -26,13 +26,27 @@ import { devUser, ensureDevUser, isDev } from './dev/devUser'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// v1 MCP is read-only: built-in write tools are switched off per collection
+// The MCP plugin exposes every collection with every built-in tool unless told
+// otherwise, so v1 opts each one out of anything that writes.
 const readOnlyTools = {
   create: false,
   update: false,
   delete: false,
   duplicate: false,
   restoreVersion: false,
+  getUploadInstructions: false,
+} as const
+
+// Users are not exposed at all. (Login and password tools are opt-in, so they stay off.)
+const hiddenTools = {
+  ...readOnlyTools,
+  count: false,
+  countVersions: false,
+  find: false,
+  findDistinct: false,
+  findVersionByID: false,
+  findVersions: false,
+  getCollectionSchema: false,
 } as const
 
 export default buildConfig({
@@ -108,6 +122,10 @@ export default buildConfig({
         'purchase-lines': { tools: readOnlyTools },
         suppliers: { tools: readOnlyTools },
         'supplier-parts': { tools: readOnlyTools },
+        media: { tools: readOnlyTools },
+        folders: { tools: readOnlyTools },
+        tags: { tools: readOnlyTools },
+        users: { tools: hiddenTools },
       },
     }),
   ],
