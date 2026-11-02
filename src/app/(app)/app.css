@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+/* PCB vernacular: soldermask green carries structure, ENIG gold marks quantities that need attention. */
+:root {
+  --surface: #f5f7f4;
+  --raised: #ffffff;
+  --ink: #1d2b24;
+  --muted: #5d6d65;
+  --line: #d6ddd7;
+  --mask: #1f5c46;
+  --mask-ink: #f5f7f4;
+  --mask-soft: #e3ece6;
+  --enig: #a8740f;
+  --enig-soft: #f6ead0;
+  --danger: #b3412f;
+  --danger-soft: #f7e1dc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #0e1813;
+    --raised: #15231c;
+    --ink: #e4ede7;
+    --muted: #93a69c;
+    --line: #26372e;
+    --mask: #63c29a;
+    --mask-ink: #0e1813;
+    --mask-soft: #1b3328;
+    --enig: #e0b04f;
+    --enig-soft: #33290f;
+    --danger: #f08a77;
+    --danger-soft: #3a1c16;
+  }
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-mask: var(--mask);
+  --color-mask-ink: var(--mask-ink);
+  --color-mask-soft: var(--mask-soft);
+  --color-enig: var(--enig);
+  --color-enig-soft: var(--enig-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-feature-settings: 'tnum' 1;
+  min-height: 100dvh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mask);
+  outline-offset: 2px;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open].sheet {
+    animation: sheet-up 180ms ease-out;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}

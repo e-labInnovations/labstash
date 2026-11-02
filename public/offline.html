@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f5c46" />
+    <title>Offline · LabStash</title>
+    <style>
+      :root {
+        --surface: #f5f7f4;
+        --ink: #1d2b24;
+        --muted: #5d6d65;
+        --mask: #1f5c46;
+        --mask-ink: #f5f7f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --surface: #0e1813;
+          --ink: #e4ede7;
+          --muted: #93a69c;
+          --mask: #63c29a;
+          --mask-ink: #0e1813;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        background: var(--surface);
+        color: var(--ink);
+        font: 17px/1.4 ui-sans-serif, system-ui, sans-serif;
+      }
+      main {
+        max-width: 22rem;
+        padding: 1.5rem;
+      }
+      img {
+        width: 56px;
+        height: 56px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 1.25rem 0 0.25rem;
+      }
+      p {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+      }
+      button {
+        height: 56px;
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        background: var(--mask);
+        color: var(--mask-ink);
+        font: 600 18px ui-sans-serif, system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon.svg" alt="" />
+      <h1>You’re offline</h1>
+      <p>LabStash needs a connection to show live stock. Check Wi-Fi, or that the server is running, then try again.</p>
+      <button onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>
