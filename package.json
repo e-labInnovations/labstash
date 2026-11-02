@@ -1,39 +1,62 @@
 {
   "name": "labstash",
-  "version": "1.0.0",
-  "description": "A blank template to get started with Payload",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted inventory for electronic components: what you have, which box it is in, and what to reorder. Payload CMS + Next.js, with a mobile-first PWA and an MCP endpoint.",
+  "keywords": [
+    "inventory",
+    "electronics",
+    "components",
+    "parts",
+    "stock",
+    "pwa",
+    "payload-cms",
+    "nextjs",
+    "kicad",
+    "mcp"
+  ],
   "license": "MIT",
+  "author": "e-labInnovations <mohammedashad23@gmail.com>",
   "type": "module",
   "scripts": {
-    "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" payload build",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
-    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
-    "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
-    "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
-    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" payload build",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
-    "test": "pnpm run test:int && pnpm run test:e2e",
-    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
+    "ci": "payload migrate && npm run build",
+    "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
+    "test": "npm run test:unit && npm run test:int",
+    "test:unit": "cross-env NODE_OPTIONS=--no-deprecation vitest run --project unit",
+    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --project int",
+    "test:e2e": "playwright test",
+    "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/seed.ts --",
+    "import:etstore": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/import-etstore.ts --",
+    "receive": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/receive.ts --",
+    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
+    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap"
   },
   "dependencies": {
+    "@payloadcms/db-vercel-postgres": "4.0.0-beta.6",
     "@payloadcms/next": "4.0.0-beta.6",
     "@payloadcms/plugin-mcp": "4.0.0-beta.6",
+    "@payloadcms/plugin-nested-docs": "4.0.0-beta.6",
     "@payloadcms/richtext-lexical": "4.0.0-beta.6",
+    "@payloadcms/storage-vercel-blob": "4.0.0-beta.6",
     "@payloadcms/transformer-sharp": "4.0.0-beta.6",
     "@payloadcms/ui": "4.0.0-beta.6",
+    "barcode-detector": "3.2.3",
     "cross-env": "10.1.0",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "next": "16.4.2",
     "payload": "4.0.0-beta.6",
     "react": "19.3.1",
-    "react-dom": "19.3.1",
-    "@payloadcms/db-sqlite": "4.0.0-beta.6"
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
     "@testing-library/react": "16.3.0",
     "@types/node": "24.12.3",
     "@types/react": "19.3.0",
@@ -43,20 +66,14 @@
     "eslint-config-next": "16.4.2",
     "jsdom": "28.0.0",
     "oxfmt": "^0.73.0",
+    "tailwindcss": "4.3.3",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
+    "vite": "8.3.5",
     "vite-tsconfig-paths": "6.0.5",
     "vitest": "5.0.1"
   },
   "engines": {
-    "node": ">=24.22.1",
-    "pnpm": "^9 || ^10 || ^11"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "esbuild",
-      "unrs-resolver"
-    ]
+    "node": ">=24.22.1"
   }
 }

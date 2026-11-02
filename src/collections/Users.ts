@@ -5,10 +5,12 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
   },
-  auth: true,
+  // API keys authenticate MCP clients (Authorization: users API-Key <key>)
+  auth: {
+    useAPIKey: true,
+  },
   fields: [
     // Email added by default
-    // Add more fields as needed
   ],
   versions: false,
 }

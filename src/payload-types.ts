@@ -79,22 +79,48 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
+    parts: Part;
+    stock: Stock;
+    'stock-movements': StockMovement;
+    locations: Location;
+    categories: Category;
+    purchases: Purchase;
+    'purchase-lines': PurchaseLine;
+    suppliers: Supplier;
+    'supplier-parts': SupplierPart;
     media: Media;
     folders: Folder;
     tags: Tag;
+    users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
     'payload-llm-instructions': PayloadLlmInstruction;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    parts: {
+      stock: 'stock';
+      supplierParts: 'supplier-parts';
+    };
+    purchases: {
+      lines: 'purchase-lines';
+    };
+  };
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
+    parts: PartsSelect<false> | PartsSelect<true>;
+    stock: StockSelect<false> | StockSelect<true>;
+    'stock-movements': StockMovementsSelect<false> | StockMovementsSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    purchases: PurchasesSelect<false> | PurchasesSelect<true>;
+    'purchase-lines': PurchaseLinesSelect<false> | PurchaseLinesSelect<true>;
+    suppliers: SuppliersSelect<false> | SuppliersSelect<true>;
+    'supplier-parts': SupplierPartsSelect<false> | SupplierPartsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     folders: FoldersSelect<false> | FoldersSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -102,7 +128,7 @@ export interface Config {
     'payload-llm-instructions': PayloadLlmInstructionsSelect<false> | PayloadLlmInstructionsSelect<true>;
   };
   db: {
-    defaultIDType: number;
+    defaultIDType: string;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | 'en' | 'en'[];
   globals: {};
@@ -141,20 +167,110 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "parts".
  */
-export interface User {
-  id: number;
+export interface Part {
+  id: string;
+  name: string;
+  mpn?: string | null;
+  manufacturer?: string | null;
+  /**
+   * e.g. 0603, SOP-8, TO-220
+   */
+  package?: string | null;
+  category?: (string | null) | Category;
+  _h_tags?: (string | Tag)[] | null;
+  description?: string | null;
+  /**
+   * Base units: 10k resistor = 10000
+   */
+  value?: number | null;
+  unit?: ('Ω' | 'F' | 'H' | 'V' | 'A' | 'W' | 'Hz' | 'mAh' | 'm' | 'g' | 'pcs') | null;
+  /**
+   * Flag as low stock at or below this
+   */
+  minStock?: number | null;
+  totalQuantity?: number | null;
+  lowStock?: boolean | null;
+  datasheet?: (string | null) | Media;
+  images?: (string | Media)[] | null;
+  model3d?: (string | null) | Media;
+  /**
+   * Library:Symbol
+   */
+  kicadSymbol?: string | null;
+  /**
+   * Library:Footprint
+   */
+  kicadFootprint?: string | null;
+  notes?: string | null;
+  stock?: {
+    docs?: (string | Stock)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  supplierParts?: {
+    docs?: (string | SupplierPart)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   createdBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  name: string;
+  parent?: (string | null) | Category;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Category;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+  apiKey?: string | null;
+  apiKeyLast4?: string | null;
+  apiKeyIndex?: string | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
@@ -175,20 +291,44 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
+ * via the `definition` "tags".
  */
-export interface Media {
-  id: number;
-  alt: string;
-  _h_folders?: (number | null) | Folder;
-  _h_tags?: (number | Tag)[] | null;
+export interface Tag {
+  id: string;
+  _h_tags?: (string | null) | Tag;
+  name: string;
   createdBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+  _h_slugPath?: string | null;
+  _h_titlePath?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  alt?: string | null;
+  kind?: ('image' | 'datasheet' | 'model3d' | 'kicad' | 'other') | null;
+  _h_folders?: (string | null) | Folder;
+  _h_tags?: (string | Tag)[] | null;
+  prefix?: string | null;
+  _objectKey?: string | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -217,16 +357,16 @@ export interface Media {
  * via the `definition` "folders".
  */
 export interface Folder {
-  id: number;
-  _h_folders?: (number | null) | Folder;
+  id: string;
+  _h_folders?: (string | null) | Folder;
   name: string;
   createdBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -234,32 +374,230 @@ export interface Folder {
   _h_titlePath?: string | null;
 }
 /**
+ * Read-only view of what is where. Change it by recording a stock movement.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
+ * via the `definition` "stock".
  */
-export interface Tag {
-  id: number;
-  _h_tags?: (number | null) | Tag;
-  name: string;
+export interface Stock {
+  id: string;
+  part: string | Part;
+  location: string | Location;
+  quantity: number;
+  /**
+   * Count is a rough guess (cheap passives)
+   */
+  approximate?: boolean | null;
   createdBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedAt: string;
   createdAt: string;
-  _h_slugPath?: string | null;
-  _h_titlePath?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: string;
+  /**
+   * Printed on the label, e.g. B03 or B03-17
+   */
+  code: string;
+  name?: string | null;
+  kind: 'box' | 'compartment' | 'inbox' | 'other';
+  /**
+   * Compartments per row, for the box grid in the app
+   */
+  columns?: number | null;
+  photo?: (string | null) | Media;
+  notes?: string | null;
+  parent?: (string | null) | Location;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Location;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "supplier-parts".
+ */
+export interface SupplierPart {
+  id: string;
+  supplier: string | Supplier;
+  part: string | Part;
+  /**
+   * Store product code, e.g. ET9233
+   */
+  sku: string;
+  /**
+   * Title as listed by the store
+   */
+  title?: string | null;
+  handle?: string | null;
+  variantId?: string | null;
+  url?: string | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "suppliers".
+ */
+export interface Supplier {
+  id: string;
+  name: string;
+  website?: string | null;
+  importer: 'etstore' | 'robu' | 'abest' | 'manual';
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Every stock change. Receive, move, use or adjust — records cannot be edited.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stock-movements".
+ */
+export interface StockMovement {
+  id: string;
+  type: 'receive' | 'move' | 'use' | 'adjust';
+  quantity: number;
+  occurredAt: string;
+  part: string | Part;
+  from?: (string | null) | Location;
+  to?: (string | null) | Location;
+  purchaseLine?: (string | null) | PurchaseLine;
+  note?: string | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "purchase-lines".
+ */
+export interface PurchaseLine {
+  id: string;
+  purchase: string | Purchase;
+  /**
+   * Line title as on the order
+   */
+  title: string;
+  part: string | Part;
+  supplierPart?: (string | null) | SupplierPart;
+  qtyOrdered: number;
+  /**
+   * Sum of receive movements
+   */
+  qtyReceived?: number | null;
+  /**
+   * INR
+   */
+  lineTotal?: number | null;
+  /**
+   * Will not arrive (out of stock, oversold, refunded)
+   */
+  cancelled?: boolean | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "purchases".
+ */
+export interface Purchase {
+  id: string;
+  supplier: string | Supplier;
+  orderNumber: string;
+  orderedAt?: string | null;
+  /**
+   * Store order id (e.g. Shopify order GID). Makes imports idempotent.
+   */
+  externalId?: string | null;
+  /**
+   * Derived from line receipts
+   */
+  status: 'ordered' | 'partial' | 'received' | 'cancelled';
+  /**
+   * INR
+   */
+  subtotal?: number | null;
+  tax?: number | null;
+  shipping?: number | null;
+  total?: number | null;
+  notes?: string | null;
+  lines?: {
+    docs?: (string | PurchaseLine)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number;
+  id: string;
   key: string;
   data:
     | {
@@ -276,28 +614,64 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number;
+  id: string;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'parts';
+        value: string | Part;
+      } | null)
+    | ({
+        relationTo: 'stock';
+        value: string | Stock;
+      } | null)
+    | ({
+        relationTo: 'stock-movements';
+        value: string | StockMovement;
+      } | null)
+    | ({
+        relationTo: 'locations';
+        value: string | Location;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'purchases';
+        value: string | Purchase;
+      } | null)
+    | ({
+        relationTo: 'purchase-lines';
+        value: string | PurchaseLine;
+      } | null)
+    | ({
+        relationTo: 'suppliers';
+        value: string | Supplier;
+      } | null)
+    | ({
+        relationTo: 'supplier-parts';
+        value: string | SupplierPart;
       } | null)
     | ({
         relationTo: 'media';
-        value: number | Media;
+        value: string | Media;
       } | null)
     | ({
         relationTo: 'folders';
-        value: number | Folder;
+        value: string | Folder;
       } | null)
     | ({
         relationTo: 'tags';
-        value: number | Tag;
+        value: string | Tag;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: string | User;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -307,10 +681,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number;
+  id: string;
   user: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   };
   key?: string | null;
   value?:
@@ -330,7 +704,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number;
+  id: string;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -349,39 +723,190 @@ export interface PayloadLlmInstruction {
   systemInstructions?: LexicalRichText<LexicalNodes_3DE324E4> | null;
   createdBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedBy?: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   } | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "parts_select".
  */
-export interface UsersSelect<T extends boolean = true> {
+export interface PartsSelect<T extends boolean = true> {
+  name?: T;
+  mpn?: T;
+  manufacturer?: T;
+  package?: T;
+  category?: T;
+  _h_tags?: T;
+  description?: T;
+  value?: T;
+  unit?: T;
+  minStock?: T;
+  totalQuantity?: T;
+  lowStock?: T;
+  datasheet?: T;
+  images?: T;
+  model3d?: T;
+  kicadSymbol?: T;
+  kicadFootprint?: T;
+  notes?: T;
+  stock?: T;
+  supplierParts?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stock_select".
+ */
+export interface StockSelect<T extends boolean = true> {
+  part?: T;
+  location?: T;
+  quantity?: T;
+  approximate?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stock-movements_select".
+ */
+export interface StockMovementsSelect<T extends boolean = true> {
+  type?: T;
+  quantity?: T;
+  occurredAt?: T;
+  part?: T;
+  from?: T;
+  to?: T;
+  purchaseLine?: T;
+  note?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations_select".
+ */
+export interface LocationsSelect<T extends boolean = true> {
+  code?: T;
+  name?: T;
+  kind?: T;
+  columns?: T;
+  photo?: T;
+  notes?: T;
+  parent?: T;
+  breadcrumbs?:
     | T
     | {
+        doc?: T;
+        url?: T;
+        label?: T;
         id?: T;
-        createdAt?: T;
-        expiresAt?: T;
       };
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  parent?: T;
+  breadcrumbs?:
+    | T
+    | {
+        doc?: T;
+        url?: T;
+        label?: T;
+        id?: T;
+      };
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "purchases_select".
+ */
+export interface PurchasesSelect<T extends boolean = true> {
+  supplier?: T;
+  orderNumber?: T;
+  orderedAt?: T;
+  externalId?: T;
+  status?: T;
+  subtotal?: T;
+  tax?: T;
+  shipping?: T;
+  total?: T;
+  notes?: T;
+  lines?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "purchase-lines_select".
+ */
+export interface PurchaseLinesSelect<T extends boolean = true> {
+  purchase?: T;
+  title?: T;
+  part?: T;
+  supplierPart?: T;
+  qtyOrdered?: T;
+  qtyReceived?: T;
+  lineTotal?: T;
+  cancelled?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "suppliers_select".
+ */
+export interface SuppliersSelect<T extends boolean = true> {
+  name?: T;
+  website?: T;
+  importer?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "supplier-parts_select".
+ */
+export interface SupplierPartsSelect<T extends boolean = true> {
+  supplier?: T;
+  part?: T;
+  sku?: T;
+  title?: T;
+  handle?: T;
+  variantId?: T;
+  url?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -389,8 +914,11 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  kind?: T;
   _h_folders?: T;
   _h_tags?: T;
+  prefix?: T;
+  _objectKey?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -444,6 +972,34 @@ export interface TagsSelect<T extends boolean = true> {
   createdAt?: T;
   _h_slugPath?: T;
   _h_titlePath?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  apiKey?: T;
+  apiKeyLast4?: T;
+  apiKeyIndex?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -528,7 +1084,20 @@ export interface CollectionsWidget {
 export interface CollectionQueryWidget {
   data?: {
     title?: string | null;
-    relatedCollection: 'users' | 'media' | 'folders' | 'tags';
+    relatedCollection:
+      | 'parts'
+      | 'stock'
+      | 'stock-movements'
+      | 'locations'
+      | 'categories'
+      | 'purchases'
+      | 'purchase-lines'
+      | 'suppliers'
+      | 'supplier-parts'
+      | 'media'
+      | 'folders'
+      | 'tags'
+      | 'users';
     where?:
       | {
           [k: string]: unknown;
@@ -550,7 +1119,23 @@ export interface CollectionQueryWidget {
  */
 export interface ActivityWidget {
   data?: {
-    excludedCollections?: ('users' | 'media' | 'folders' | 'tags')[] | null;
+    excludedCollections?:
+      | (
+          | 'parts'
+          | 'stock'
+          | 'stock-movements'
+          | 'locations'
+          | 'categories'
+          | 'purchases'
+          | 'purchase-lines'
+          | 'suppliers'
+          | 'supplier-parts'
+          | 'media'
+          | 'folders'
+          | 'tags'
+          | 'users'
+        )[]
+      | null;
   };
   width: 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }

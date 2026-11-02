@@ -1,0 +1,591 @@
+{
+  "store": "etstore.in",
+  "order": "#31860",
+  "orderGid": "gid://shopify/Order/18992625516795",
+  "placed": "2026-11-02T10:25:23Z",
+  "totals": {
+    "subtotal": 1399.38,
+    "tax": 251.88,
+    "shipping": 55.0,
+    "paid": 1706.26
+  },
+  "note": "Reconstructed from the Storefront cart that was checked out; matches order line-for-line (72 lines, 1188 pcs). lineTotalInr = cart line amount (tax-inclusive). Handle derived from ET code — verify via /products/<handle>.js.",
+  "items": [
+    {
+      "title": "50g Solder Lead HYFLOW 60/40 gauge 22 WIRE soldering ET8068",
+      "etCode": "ET8068",
+      "handle": "e8068",
+      "variantGid": "gid://shopify/ProductVariant/46785869185275",
+      "quantity": 1,
+      "lineTotalInr": 250.0
+    },
+    {
+      "title": "TS110916043 SMD-4P 4.5x4.5mm HanElectricity push button Tactile Switch SMD SPST 1.6N 4.3mm ETH6893",
+      "etCode": "ETH6893",
+      "handle": "h6893",
+      "variantGid": "gid://shopify/ProductVariant/49314593505531",
+      "quantity": 20,
+      "lineTotalInr": 23.0
+    },
+    {
+      "title": "TP4056 1A Li-ion lithium Battery Charging Module Type C With Current Protection ET5786",
+      "etCode": "ET5786",
+      "handle": "e5786",
+      "variantGid": "gid://shopify/ProductVariant/46786052718843",
+      "quantity": 3,
+      "lineTotalInr": 57.36
+    },
+    {
+      "title": "3.7V 1200mAh 18650 Li-ion Battery HONGLI ET7246",
+      "etCode": "ET7246",
+      "handle": "e7246",
+      "variantGid": "gid://shopify/ProductVariant/46786344911099",
+      "quantity": 2,
+      "lineTotalInr": 72.68
+    },
+    {
+      "title": "WS2812 PIXEL RGB LED 4Pin SMD 5050 TINBO ETA1841",
+      "etCode": "ETA1841",
+      "handle": "a1841",
+      "variantGid": "gid://shopify/ProductVariant/46783852871931",
+      "quantity": 5,
+      "lineTotalInr": 25.65
+    },
+    {
+      "title": "4.7uF 0603 6.3V CL10A475KQ8NNNCSamsung X5R 10% MLCC SMD ETA2362",
+      "etCode": "ETA2362",
+      "handle": "a2362",
+      "variantGid": "gid://shopify/ProductVariant/47051610915067",
+      "quantity": 20,
+      "lineTotalInr": 14.2
+    },
+    {
+      "title": "Photo transistor 5MM PT333-3B IR receiver ET7059",
+      "etCode": "ET7059",
+      "handle": "e7059",
+      "variantGid": "gid://shopify/ProductVariant/46786382266619",
+      "quantity": 5,
+      "lineTotalInr": 14.35
+    },
+    {
+      "title": "IR LED 5MM IR333C-A ET7085",
+      "etCode": "ET7085",
+      "handle": "e7085",
+      "variantGid": "gid://shopify/ProductVariant/46786382299387",
+      "quantity": 5,
+      "lineTotalInr": 13.3
+    },
+    {
+      "title": "Water Pump with dual Nozzle Submersible Dc 3-6V ET6008",
+      "etCode": "ET6008",
+      "handle": "e6008",
+      "variantGid": "gid://shopify/ProductVariant/46786047508731",
+      "quantity": 2,
+      "lineTotalInr": 70.0
+    },
+    {
+      "title": "0 OHM 1206 SMD RESISTOR 0E 0R TOLERANCE 1% ET9278",
+      "etCode": "ET9278",
+      "handle": "e9278",
+      "variantGid": "gid://shopify/ProductVariant/46786400026875",
+      "quantity": 50,
+      "lineTotalInr": 14.5
+    },
+    {
+      "title": "Micro USB 5pin SMD Female Connector Micro B  ET8201",
+      "etCode": "ET8201",
+      "handle": "e8201",
+      "variantGid": "gid://shopify/ProductVariant/46785881604347",
+      "quantity": 5,
+      "lineTotalInr": 18.0
+    },
+    {
+      "title": "USB TYPE-C 16PIN SMD(073) Female Socket SMD ET7334",
+      "etCode": "ET7334",
+      "handle": "e7334",
+      "variantGid": "gid://shopify/ProductVariant/46786270331131",
+      "quantity": 4,
+      "lineTotalInr": 35.04
+    },
+    {
+      "title": "4.7K OHM 0603 SMD RESISTOR 1/16W 4K7 472 5% ET9233",
+      "etCode": "ET9233",
+      "handle": "e9233",
+      "variantGid": "gid://shopify/ProductVariant/46786386690299",
+      "quantity": 20,
+      "lineTotalInr": 2.0
+    },
+    {
+      "title": "2.2K OHM 0603 SMD RESISTOR 1/16W 5% 2k2 ET7552",
+      "etCode": "ET7552",
+      "handle": "e7552",
+      "variantGid": "gid://shopify/ProductVariant/46786457010427",
+      "quantity": 20,
+      "lineTotalInr": 2.4
+    },
+    {
+      "title": "120K OHM 0603 SMD RESISTOR 124 1/16W 5% ETD11483",
+      "etCode": "ETD11483",
+      "handle": "d11483",
+      "variantGid": "gid://shopify/ProductVariant/48294248317179",
+      "quantity": 20,
+      "lineTotalInr": 2.4
+    },
+    {
+      "title": "330 OHM 0603 SMD RESISTOR 330R 331 1/16W 5% ET9286",
+      "etCode": "ET9286",
+      "handle": "e9286",
+      "variantGid": "gid://shopify/ProductVariant/46786386952443",
+      "quantity": 50,
+      "lineTotalInr": 7.0
+    },
+    {
+      "title": "1M OHM 0603 SMD RESISTOR 1/16W 5% tolerance 1 mega ET9314",
+      "etCode": "ET9314",
+      "handle": "e9314",
+      "variantGid": "gid://shopify/ProductVariant/46786387378427",
+      "quantity": 20,
+      "lineTotalInr": 2.8
+    },
+    {
+      "title": "22 OHM 0603 SMD RESISTOR 1/16W 5% 22E 22R ET7510",
+      "etCode": "ET7510",
+      "handle": "e7510",
+      "variantGid": "gid://shopify/ProductVariant/46786456715515",
+      "quantity": 20,
+      "lineTotalInr": 2.8
+    },
+    {
+      "title": "3.3K OHM 0603 SMD RESISTOR 1/16W 1% 332 3K3 ET9817",
+      "etCode": "ET9817",
+      "handle": "e9817",
+      "variantGid": "gid://shopify/ProductVariant/46786386428155",
+      "quantity": 20,
+      "lineTotalInr": 3.0
+    },
+    {
+      "title": "220 OHM 0603 SMD RESISTOR 1/16W 5% tolerance 220R 220e ET9309",
+      "etCode": "ET9309",
+      "handle": "e9309",
+      "variantGid": "gid://shopify/ProductVariant/46786387149051",
+      "quantity": 20,
+      "lineTotalInr": 3.2
+    },
+    {
+      "title": "2K OHM 0603 SMD RESISTOR 1/16W 5% tolerance 202 ETH6930",
+      "etCode": "ETH6930",
+      "handle": "h6930",
+      "variantGid": "gid://shopify/ProductVariant/67606442115323",
+      "quantity": 20,
+      "lineTotalInr": 3.4
+    },
+    {
+      "title": "100 OHM 0603 SMD RESISTOR 100R 100E 1/16W 5% ET9247",
+      "etCode": "ET9247",
+      "handle": "e9247",
+      "variantGid": "gid://shopify/ProductVariant/46786386886907",
+      "quantity": 50,
+      "lineTotalInr": 10.0
+    },
+    {
+      "title": "220k OHM 0603 SMD RESISTOR 1/16W 5% ET9313",
+      "etCode": "ET9313",
+      "handle": "e9313",
+      "variantGid": "gid://shopify/ProductVariant/46786386067707",
+      "quantity": 20,
+      "lineTotalInr": 4.0
+    },
+    {
+      "title": "470K OHM 0603 SMD RESISTOR 1/16W 5% ET7554",
+      "etCode": "ET7554",
+      "handle": "e7554",
+      "variantGid": "gid://shopify/ProductVariant/46786457141499",
+      "quantity": 20,
+      "lineTotalInr": 4.0
+    },
+    {
+      "title": "10 OHM 0603 SMD RESISTOR 10R 1/16W 5% 10E ET9253",
+      "etCode": "ET9253",
+      "handle": "e9253",
+      "variantGid": "gid://shopify/ProductVariant/46786386919675",
+      "quantity": 20,
+      "lineTotalInr": 4.0
+    },
+    {
+      "title": "47 OHM 0603 SMD RESISTOR 1/16W 5% tolerance 47R ET9310",
+      "etCode": "ET9310",
+      "handle": "e9310",
+      "variantGid": "gid://shopify/ProductVariant/46786387181819",
+      "quantity": 20,
+      "lineTotalInr": 4.0
+    },
+    {
+      "title": "33k OHM 0603 SMD RESISTOR 1/16W 5% tolerance ET9311",
+      "etCode": "ET9311",
+      "handle": "e9311",
+      "variantGid": "gid://shopify/ProductVariant/46786387345659",
+      "quantity": 20,
+      "lineTotalInr": 4.0
+    },
+    {
+      "title": "1.5K OHM 0603 SMD RESISTOR 1/16W 5% 1K5 ET7557",
+      "etCode": "ET7557",
+      "handle": "e7557",
+      "variantGid": "gid://shopify/ProductVariant/46786457305339",
+      "quantity": 20,
+      "lineTotalInr": 4.0
+    },
+    {
+      "title": "100k OHM 0603 SMD RESISTOR 1% tolerance ET9312",
+      "etCode": "ET9312",
+      "handle": "e9312",
+      "variantGid": "gid://shopify/ProductVariant/46786385903867",
+      "quantity": 20,
+      "lineTotalInr": 4.4
+    },
+    {
+      "title": "470 OHM 0603 SMD RESISTOR 470R 471 1/16W 1% ET9288",
+      "etCode": "ET9288",
+      "handle": "e9288",
+      "variantGid": "gid://shopify/ProductVariant/46786385838331",
+      "quantity": 20,
+      "lineTotalInr": 4.4
+    },
+    {
+      "title": "22k OHM 0603 SMD RESISTOR 1/16W 1% tolerance ET9574",
+      "etCode": "ET9574",
+      "handle": "e9574",
+      "variantGid": "gid://shopify/ProductVariant/46786386100475",
+      "quantity": 20,
+      "lineTotalInr": 4.4
+    },
+    {
+      "title": "47K OHM 0603 SMD RESISTOR 1/16W 1% tolerance ET9308",
+      "etCode": "ET9308",
+      "handle": "e9308",
+      "variantGid": "gid://shopify/ProductVariant/46786385871099",
+      "quantity": 20,
+      "lineTotalInr": 4.4
+    },
+    {
+      "title": "5.1K OHM 0603 SMD RESISTOR 1/16W 1% 5k1 ET7551",
+      "etCode": "ET7551",
+      "handle": "e7551",
+      "variantGid": "gid://shopify/ProductVariant/46786456977659",
+      "quantity": 20,
+      "lineTotalInr": 4.8
+    },
+    {
+      "title": "10K OHM 0603 SMD RESISTOR 103 1/16W 5% YAGEO ET9232",
+      "etCode": "ET9232",
+      "handle": "e9232",
+      "variantGid": "gid://shopify/ProductVariant/46786386657531",
+      "quantity": 50,
+      "lineTotalInr": 8.0
+    },
+    {
+      "title": "1K OHM 0603 SMD RESISTOR 5% ET9234",
+      "etCode": "ET9234",
+      "handle": "e9234",
+      "variantGid": "gid://shopify/ProductVariant/46786386723067",
+      "quantity": 50,
+      "lineTotalInr": 8.0
+    },
+    {
+      "title": "0603 RED SMD LED COLOR ET7116",
+      "etCode": "ET7116",
+      "handle": "e7116",
+      "variantGid": "gid://shopify/ProductVariant/46786411725051",
+      "quantity": 50,
+      "lineTotalInr": 9.0
+    },
+    {
+      "title": "10NF 50V 0603 SMD Ceramic Capacitor 103 10% walsin X7R ET7821",
+      "etCode": "ET7821",
+      "handle": "e7821",
+      "variantGid": "gid://shopify/ProductVariant/46786360541435",
+      "quantity": 20,
+      "lineTotalInr": 9.6
+    },
+    {
+      "title": "BAT54C Diode Schottky FSC SOT23 0.2A 30V L43 ET7892",
+      "etCode": "ET7892",
+      "handle": "e7892",
+      "variantGid": "gid://shopify/ProductVariant/46786374533371",
+      "quantity": 10,
+      "lineTotalInr": 10.0
+    },
+    {
+      "title": "100NF 50V 0603 SMD Ceramic Capacitor 104 10% walsin X7R ET9251",
+      "etCode": "ET9251",
+      "handle": "e9251",
+      "variantGid": "gid://shopify/ProductVariant/46786360672507",
+      "quantity": 20,
+      "lineTotalInr": 10.8
+    },
+    {
+      "title": "A7 Diode hottech SMD 1A 1000V SOD-123FL 1n4007 in4007 ETA1007",
+      "etCode": "ETA1007",
+      "handle": "a1007",
+      "variantGid": "gid://shopify/ProductVariant/46783780946171",
+      "quantity": 20,
+      "lineTotalInr": 10.6
+    },
+    {
+      "title": "CL10A105KO8NNNC 1uF 16V SAMSUNG X5R 10% 0603 MLCC SMD SMT ET7919",
+      "etCode": "ET7919",
+      "handle": "e7919",
+      "variantGid": "gid://shopify/ProductVariant/47039939379451",
+      "quantity": 20,
+      "lineTotalInr": 12.0
+    },
+    {
+      "title": "PCB For C Type USB to DIP Adapter Female breakout board module ET6513",
+      "etCode": "ET6513",
+      "handle": "e6513",
+      "variantGid": "gid://shopify/ProductVariant/46786002092283",
+      "quantity": 2,
+      "lineTotalInr": 12.0
+    },
+    {
+      "title": "PCB For CH32V003J4M6 WCH RISC Micro controller 8pin breakout board ETH6674",
+      "etCode": "ETH6674",
+      "handle": "h6674",
+      "variantGid": "gid://shopify/ProductVariant/49108787429627",
+      "quantity": 2,
+      "lineTotalInr": 12.0
+    },
+    {
+      "title": "L78L05ABUTR 5V 100mA SOT-89-3 Voltage Regulator 8C SMD ST 7805 78L05 ETD11112",
+      "etCode": "ETD11112",
+      "handle": "d11112",
+      "variantGid": "gid://shopify/ProductVariant/47398660833531",
+      "quantity": 3,
+      "lineTotalInr": 12.39
+    },
+    {
+      "title": "SE265 Mini Fuse Clip PCB Fuse Holder ETD11117",
+      "etCode": "ETD11117",
+      "handle": "d11117",
+      "variantGid": "gid://shopify/ProductVariant/47435170251003",
+      "quantity": 4,
+      "lineTotalInr": 16.2
+    },
+    {
+      "title": "2N7002K MDD SOT-23 N Channel MOSFET 60V 300mA 702K ET6479",
+      "etCode": "ET6479",
+      "handle": "e6479",
+      "variantGid": "gid://shopify/ProductVariant/46786067464443",
+      "quantity": 10,
+      "lineTotalInr": 12.9
+    },
+    {
+      "title": "BAV99 SOT23 A7 DUAL Diode SMD ET9284",
+      "etCode": "ET9284",
+      "handle": "e9284",
+      "variantGid": "gid://shopify/ProductVariant/46786374631675",
+      "quantity": 10,
+      "lineTotalInr": 13.0
+    },
+    {
+      "title": "BC847B HOTTECH SOT23 1F NPN SMD Transistor 50V 100mA ETA1389",
+      "etCode": "ETA1389",
+      "handle": "a1389",
+      "variantGid": "gid://shopify/ProductVariant/46783840026875",
+      "quantity": 20,
+      "lineTotalInr": 13.0
+    },
+    {
+      "title": "BC857B SOT23 SMD PNP 45V 100mA TRANSISTOR HOTTECH 3F ETA1817",
+      "etCode": "ETA1817",
+      "handle": "a1817",
+      "variantGid": "gid://shopify/ProductVariant/46783840321787",
+      "quantity": 20,
+      "lineTotalInr": 14.4
+    },
+    {
+      "title": "0603 BLUE SMD LED ET7193",
+      "etCode": "ET7193",
+      "handle": "e7193",
+      "variantGid": "gid://shopify/ProductVariant/46786411757819",
+      "quantity": 50,
+      "lineTotalInr": 15.0
+    },
+    {
+      "title": "3.3x3.3x2mm Round button SPST SMD Tactile Switch GT-TC026A-H020-L1 ET7889",
+      "etCode": "ET7889",
+      "handle": "e7889",
+      "variantGid": "gid://shopify/ProductVariant/46786279735547",
+      "quantity": 10,
+      "lineTotalInr": 15.6
+    },
+    {
+      "title": "10uF 6.3V SAMSUNG CL10A106MQ8NNNC  X5R 10% 0603 MLCC SMD SMT ET7920",
+      "etCode": "ET7920",
+      "handle": "e7920",
+      "variantGid": "gid://shopify/ProductVariant/47039939412219",
+      "quantity": 20,
+      "lineTotalInr": 16.0
+    },
+    {
+      "title": "BSS84 SOT-23 MDD 60V 170mA P Channel MOSFET 84 ETA2598",
+      "etCode": "ETA2598",
+      "handle": "a2598",
+      "variantGid": "gid://shopify/ProductVariant/47750177554683",
+      "quantity": 10,
+      "lineTotalInr": 17.0
+    },
+    {
+      "title": "GREEN 0805 SMD LED COLOR ET7024",
+      "etCode": "ET7024",
+      "handle": "e7024",
+      "variantGid": "gid://shopify/ProductVariant/46786411987195",
+      "quantity": 50,
+      "lineTotalInr": 12.5
+    },
+    {
+      "title": "SE263 Mini Fuse Clip PCB Fuse Holder ET8871",
+      "etCode": "ET8871",
+      "handle": "e8871",
+      "variantGid": "gid://shopify/ProductVariant/47001136791803",
+      "quantity": 4,
+      "lineTotalInr": 18.04
+    },
+    {
+      "title": "L78M05CDT-TR DPAK TO252 smd ST 7805 5V 78M05 0.5A ETA1333",
+      "etCode": "ETA1333",
+      "handle": "a1333",
+      "variantGid": "gid://shopify/ProductVariant/46783842189563",
+      "quantity": 2,
+      "lineTotalInr": 18.32
+    },
+    {
+      "title": "DO3402A 3402A A29T SOT-23 MOSFET N Channel 30V 4A AO3402 ETA1564",
+      "etCode": "ETA1564",
+      "handle": "a1564",
+      "variantGid": "gid://shopify/ProductVariant/46783831703803",
+      "quantity": 10,
+      "lineTotalInr": 19.1
+    },
+    {
+      "title": "2 PIN USB type C female CONNECTOR 021N-4BVC45 2PIN ETA1970",
+      "etCode": "ETA1970",
+      "handle": "a1970",
+      "variantGid": "gid://shopify/ProductVariant/46807781474555",
+      "quantity": 4,
+      "lineTotalInr": 19.2
+    },
+    {
+      "title": "MMBT2222A HOTTECH 1P SMD SOT23 NPN Transistor 2n2222 2222 ETA1453",
+      "etCode": "ETA1453",
+      "handle": "a1453",
+      "variantGid": "gid://shopify/ProductVariant/46783840059643",
+      "quantity": 20,
+      "lineTotalInr": 19.4
+    },
+    {
+      "title": "PS-6824DVB-6PN 24V 0.5A Plugin Push button Switches A2031",
+      "etCode": null,
+      "handle": null,
+      "variantGid": "gid://shopify/ProductVariant/46803458228475",
+      "quantity": 5,
+      "lineTotalInr": 20.45
+    },
+    {
+      "title": "SS8550 SOT23 HOTTECH Y2 PNP SMD Transistor 25V 1.5A ET9812",
+      "etCode": "ET9812",
+      "handle": "e9812",
+      "variantGid": "gid://shopify/ProductVariant/46786380136699",
+      "quantity": 20,
+      "lineTotalInr": 23.4
+    },
+    {
+      "title": "MM1W24 SOD-123FL FJL Shikues 1W 24V Zener Diode SMD ETA2369",
+      "etCode": "ETA2369",
+      "handle": "a2369",
+      "variantGid": "gid://shopify/ProductVariant/47051611373819",
+      "quantity": 5,
+      "lineTotalInr": 25.5
+    },
+    {
+      "title": "ME6211C33M5G-N S2 SOT-23-5  3.3V MICRONE LDO Voltage Regulator SMD ETH6856",
+      "etCode": "ETH6856",
+      "handle": "h6856",
+      "variantGid": "gid://shopify/ProductVariant/49302635151611",
+      "quantity": 5,
+      "lineTotalInr": 25.9
+    },
+    {
+      "title": "USB C Type C Female SMD 6 PIN USB Connector ETA1852",
+      "etCode": "ETA1852",
+      "handle": "a1852",
+      "variantGid": "gid://shopify/ProductVariant/46783853428987",
+      "quantity": 4,
+      "lineTotalInr": 26.08
+    },
+    {
+      "title": "NTC 10k 0603 SMD KNTC0603/10KF3950 KUU THERMISTOR 3950K ±1%Thermistors ETD11254",
+      "etCode": "ETD11254",
+      "handle": "d11254",
+      "variantGid": "gid://shopify/ProductVariant/47648000082171",
+      "quantity": 10,
+      "lineTotalInr": 27.4
+    },
+    {
+      "title": "AO3401 A19T SOT23 SMD MOSFET P Channel 30V 4A hottech 3400 ETA1112",
+      "etCode": "ETA1112",
+      "handle": "a1112",
+      "variantGid": "gid://shopify/ProductVariant/46783831671035",
+      "quantity": 10,
+      "lineTotalInr": 28.3
+    },
+    {
+      "title": "470UF 35V SMD JWCO CAPACITOR ELECTROLYTIC 10x10.2mm 105C ETA1843",
+      "etCode": "ETA1843",
+      "handle": "a1843",
+      "variantGid": "gid://shopify/ProductVariant/46783836127483",
+      "quantity": 5,
+      "lineTotalInr": 30.25
+    },
+    {
+      "title": "LM358DT SOIC8 ST SMD op-amp ETA1060",
+      "etCode": "ETA1060",
+      "handle": "a1060",
+      "variantGid": "gid://shopify/ProductVariant/46783828590843",
+      "quantity": 5,
+      "lineTotalInr": 35.85
+    },
+    {
+      "title": "10UF 25V 0603 WALSINtech SMD Ceramic Capacitor 106 X5R 20% ET7586",
+      "etCode": "ET7586",
+      "handle": "e7586",
+      "variantGid": "gid://shopify/ProductVariant/46786283733243",
+      "quantity": 20,
+      "lineTotalInr": 43.0
+    },
+    {
+      "title": "DOD4185 TO-252 DOINGTER 40V 45A P-channel MOSFET 4185 ETA2530",
+      "etCode": "ETA2530",
+      "handle": "a2530",
+      "variantGid": "gid://shopify/ProductVariant/47221209202939",
+      "quantity": 3,
+      "lineTotalInr": 43.02
+    },
+    {
+      "title": "CH32V003J4M6 SOP8 RISC-V SMD WCH Micro controller ET7879",
+      "etCode": "ET7879",
+      "handle": "e7879",
+      "variantGid": "gid://shopify/ProductVariant/46786277802235",
+      "quantity": 2,
+      "lineTotalInr": 39.58
+    },
+    {
+      "title": "WCH-LinkE CH32 PROGRAMMER CLONE ETH6844",
+      "etCode": "ETH6844",
+      "handle": "h6844",
+      "variantGid": "gid://shopify/ProductVariant/49284454908155",
+      "quantity": 1,
+      "lineTotalInr": 235.0
+    }
+  ]
+}

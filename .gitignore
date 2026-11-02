@@ -49,8 +49,5 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 
-# local SQLite database
-*.db
-*.db-journal
-*.db-wal
-*.db-shm
+.env.test
+/.playwright-mcp
