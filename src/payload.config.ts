@@ -1,6 +1,4 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
-import { mcpPlugin } from '@payloadcms/plugin-mcp'
-import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { sharpTransformer } from '@payloadcms/transformer-sharp'
@@ -8,46 +6,12 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
-import { Users } from './collections/Users'
-import { Media } from './collections/Media'
-import { Folders } from './collections/Folders'
-import { Tags } from './collections/Tags'
-import { Categories } from './collections/Categories'
-import { Locations } from './collections/Locations'
-import { Parts } from './collections/Parts'
-import { Stock } from './collections/Stock'
-import { StockMovements } from './collections/StockMovements'
-import { Suppliers } from './collections/Suppliers'
-import { SupplierParts } from './collections/SupplierParts'
-import { Purchases } from './collections/Purchases'
-import { PurchaseLines } from './collections/PurchaseLines'
+import { Users, collections } from './collections'
 import { devUser, ensureDevUser, isDev } from './dev/devUser'
+import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-
-// The MCP plugin exposes every collection with every built-in tool unless told
-// otherwise, so v1 opts each one out of anything that writes.
-const readOnlyTools = {
-  create: false,
-  update: false,
-  delete: false,
-  duplicate: false,
-  restoreVersion: false,
-  getUploadInstructions: false,
-} as const
-
-// Users are not exposed at all. (Login and password tools are opt-in, so they stay off.)
-const hiddenTools = {
-  ...readOnlyTools,
-  count: false,
-  countVersions: false,
-  find: false,
-  findDistinct: false,
-  findVersionByID: false,
-  findVersions: false,
-  getCollectionSchema: false,
-} as const
 
 export default buildConfig({
   admin: {
@@ -57,21 +21,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [
-    Parts,
-    Stock,
-    StockMovements,
-    Locations,
-    Categories,
-    Purchases,
-    PurchaseLines,
-    Suppliers,
-    SupplierParts,
-    Media,
-    Folders,
-    Tags,
-    Users,
-  ],
+  collections,
   onInit: ensureDevUser,
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
@@ -102,33 +52,7 @@ export default buildConfig({
     fallback: true,
     defaultLocale: 'en',
   },
-  plugins: [
-    nestedDocsPlugin({
-      collections: ['locations'],
-      generateLabel: (_, doc) => String(doc.code),
-    }),
-    nestedDocsPlugin({
-      collections: ['categories'],
-      generateLabel: (_, doc) => String(doc.name),
-    }),
-    mcpPlugin({
-      collections: {
-        parts: { tools: readOnlyTools },
-        stock: { tools: readOnlyTools },
-        'stock-movements': { tools: readOnlyTools },
-        locations: { tools: readOnlyTools },
-        categories: { tools: readOnlyTools },
-        purchases: { tools: readOnlyTools },
-        'purchase-lines': { tools: readOnlyTools },
-        suppliers: { tools: readOnlyTools },
-        'supplier-parts': { tools: readOnlyTools },
-        media: { tools: readOnlyTools },
-        folders: { tools: readOnlyTools },
-        tags: { tools: readOnlyTools },
-        users: { tools: hiddenTools },
-      },
-    }),
-  ],
+  plugins,
   upload: {
     transformers: [sharpTransformer()],
   },
