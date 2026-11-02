@@ -17,6 +17,14 @@
   ],
   "license": "MIT",
   "author": "e-labInnovations <mohammedashad23@gmail.com>",
+  "homepage": "https://github.com/e-labInnovations/labstash#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e-labInnovations/labstash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/e-labInnovations/labstash/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",

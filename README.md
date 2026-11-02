@@ -40,7 +40,7 @@ It tracks every part down to the box and compartment it sits in, keeps an append
 Requirements: Node.js 24.22 or newer and a PostgreSQL server (Docker is easiest).
 
 ```bash
-git clone <this repo> labstash && cd labstash
+git clone https://github.com/e-labInnovations/labstash.git && cd labstash
 npm install
 
 # Postgres on :5432 with `labstash` and `labstash_test` databases
