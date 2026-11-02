@@ -1,43 +1,20 @@
-version: '3'
-
+# Local Postgres for development. Integration tests use <database>_test on the same server.
+#
+#   docker compose up -d
+#   DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/labstash
 services:
-  payload:
-    image: node:24.22.1-alpine
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: labstash
     volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
-    depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+      - pgdata:/var/lib/postgresql
+      - ./scripts/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
 
 volumes:
-  data:
-  # pgdata:
-  node_modules:
+  pgdata:
