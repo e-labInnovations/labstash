@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import Link, { useLinkStatus } from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 
@@ -14,6 +14,18 @@ const tabs: Array<{ href: string; label: string; icon: IconName; match: RegExp }
   { href: '/inbox', label: 'Inbox', icon: 'inbox', match: /^\/inbox/ },
   { href: '/orders', label: 'Orders', icon: 'orders', match: /^\/orders/ },
 ]
+
+/** Highlights a tab the moment it is tapped, before the next page has rendered. */
+function TabContent({ active, children }: { active: boolean; children: React.ReactNode }) {
+  const { pending } = useLinkStatus()
+  return (
+    <span
+      className={`contents ${pending && !active ? '[&>svg]:text-mask [&>[data-label]]:text-mask' : ''}`}
+    >
+      {children}
+    </span>
+  )
+}
 
 function Badge({ n, className }: { n: number; className: string }) {
   if (n <= 0) return null
@@ -46,11 +58,13 @@ export function TabBar({ inboxCount }: { inboxCount: number }) {
                   active ? 'text-mask' : 'text-muted'
                 }`}
               >
-                <Icon name={tab.icon} />
-                {tab.label}
-                {tab.icon === 'inbox' && (
-                  <Badge n={inboxCount} className="absolute top-2 left-[calc(50%+6px)]" />
-                )}
+                <TabContent active={active}>
+                  <Icon name={tab.icon} />
+                  <span data-label>{tab.label}</span>
+                  {tab.icon === 'inbox' && (
+                    <Badge n={inboxCount} className="absolute top-2 left-[calc(50%+6px)]" />
+                  )}
+                </TabContent>
               </Link>
             </li>
           )
@@ -84,9 +98,11 @@ export function Sidebar({ inboxCount, search }: { inboxCount: number; search: Re
                     active ? 'bg-mask-soft text-mask' : 'text-muted hover:bg-surface hover:text-ink'
                   }`}
                 >
-                  <Icon name={tab.icon} className="size-5" />
-                  <span className="flex-1">{tab.label}</span>
-                  {tab.icon === 'inbox' && <Badge n={inboxCount} className="" />}
+                  <TabContent active={active}>
+                    <Icon name={tab.icon} className="size-5" />
+                    <span data-label className="flex-1">{tab.label}</span>
+                    {tab.icon === 'inbox' && <Badge n={inboxCount} className="" />}
+                  </TabContent>
                 </Link>
               </li>
             )

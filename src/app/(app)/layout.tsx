@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Barlow } from 'next/font/google'
 import React from 'react'
 
+import { NavProgress } from '@/components/NavProgress'
 import { ServiceWorker } from '@/components/ServiceWorker'
 
 import './app.css'
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={barlow.variable}>
       <body className="font-sans text-[17px] leading-snug antialiased">
+        <NavProgress />
         {children}
         <ServiceWorker />
       </body>
