@@ -16,9 +16,19 @@ const appendOnlyTools = {
 
 const readOnlyTools = { ...appendOnlyTools, create: false } as const
 
-// An assistant may add parts, boxes and categories, and record stock as ledger
-// movements (validated and transactional, like the app). Everything else is read-only.
-const CAN_CREATE = new Set(['parts', 'categories', 'locations', 'stock-movements'])
+// An assistant may add parts, boxes and categories, import store orders, and record
+// stock as ledger movements (validated and transactional, like the app).
+// Everything else is read-only.
+const CAN_CREATE = new Set([
+  'parts',
+  'categories',
+  'locations',
+  'stock-movements',
+  'suppliers',
+  'supplier-parts',
+  'purchases',
+  'purchase-lines',
+])
 
 // Users are not exposed at all. (Login and password tools are opt-in, so they stay off.)
 const hiddenTools = {
