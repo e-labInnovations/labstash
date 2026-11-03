@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { AddPhoto } from '@/components/AddPhoto'
 import { Icon } from '@/components/Icon'
 import { PartActions } from '@/components/PartActions'
 import { PhotoGallery } from '@/components/PhotoGallery'
@@ -35,6 +36,23 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
             <span>{category.breadcrumbs?.map((b) => b.label).join(' › ') ?? category.name}</span>
           )}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href={`/parts/${part.id}/edit`}
+            className="flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[15px] font-semibold"
+          >
+            <Icon name="edit" className="size-5" />
+            Edit
+          </Link>
+          <AddPhoto part={part.id} alt={part.name} />
+          <Link
+            href={`/print/labels?size=s&ids=${part.id}`}
+            className="flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[15px] font-semibold"
+          >
+            <Icon name="print" className="size-5" />
+            Label
+          </Link>
+        </div>
       </PageHeader>
 
       {/* Desktop: details on the left, a sticky stock + actions panel on the right */}

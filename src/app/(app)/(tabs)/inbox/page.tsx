@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { BulkPutAway } from '@/components/BulkPutAway'
 import { PutAway } from '@/components/PutAway'
 import { Empty, PageHeader, PartRow } from '@/components/ui'
 import { allLocations, locationContents } from '@/lib/queries'
@@ -19,13 +20,26 @@ export default async function InboxPage() {
 
   return (
     <>
-      <PageHeader title="Inbox">
-        <p className="mt-1 text-muted">
-          {rows.length
-            ? `${rows.length} parts, ${pcs} pcs received and not yet in a box.`
-            : 'Received parts wait here until you put them away.'}
-        </p>
-      </PageHeader>
+      <div className="flex items-start justify-between gap-3">
+        <PageHeader title="Inbox">
+          <p className="mt-1 text-muted">
+            {rows.length
+              ? `${rows.length} ${rows.length === 1 ? 'part' : 'parts'}, ${pcs} pcs received and not yet in a box.`
+              : 'Received parts wait here until you put them away.'}
+          </p>
+        </PageHeader>
+        {inbox && (
+          <BulkPutAway
+            inboxId={inbox.location.id}
+            locations={locations}
+            items={rows.map((r) => ({
+              partId: r.part.id,
+              name: r.part.name,
+              quantity: r.quantity,
+            }))}
+          />
+        )}
+      </div>
       {rows.length === 0 || !inbox ? (
         <Empty>Inbox is empty. Receive an order to fill it.</Empty>
       ) : (

@@ -3,6 +3,8 @@ import type { Payload } from 'payload'
 import { guessPackage, guessValue } from '@/importers/etstore'
 import { withTransaction } from '@/importers/importOrder'
 import { ensureInbox } from '@/importers/receiveOrder'
+import { formatValue } from '@/lib/format'
+import { parseValue } from '@/lib/searchQuery'
 import type { Part, User } from '@/payload-types'
 
 export type NewPart = {
@@ -21,19 +23,20 @@ export type NewPart = {
  * Creates a part that didn't come from an order (a gift, salvage, an old drawer),
  * with its starting stock as an adjust movement so the ledger still explains it.
  */
-export const createPart = async (payload: Payload, user: User, input: NewPart) => {
-  const name = input.name.trim().replace(/\s+/g, ' ')
-  if (!name) throw new Error('Give the part a name')
-  if (!Number.isInteger(input.quantity) || input.quantity < 0) {
-    throw new Error('Quantity must be a whole number')
-  }
-  if (input.minStock != null && (!Number.isInteger(input.minStock) || input.minStock < 0)) {
+const cleanName = (name: string) => name.trim().replace(/\s+/g, ' ')
+
+const checkMinStock = (minStock: number | null | undefined) => {
+  if (minStock != null && (!Number.isInteger(minStock) || minStock < 0)) {
     throw new Error('Reorder level must be a whole number')
   }
+}
 
+const refuseDuplicate = async (payload: Payload, user: User, name: string, except?: string) => {
   const same = await payload.find({
     collection: 'parts',
-    where: { name: { equals: name } },
+    where: {
+      and: [{ name: { equals: name } }, ...(except ? [{ id: { not_equals: except } }] : [])],
+    },
     limit: 1,
     depth: 0,
     select: { name: true },
@@ -41,6 +44,16 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
     overrideAccess: false,
   })
   if (same.docs[0]) throw new Error(`“${name}” already exists — add stock from its page`)
+}
+
+export const createPart = async (payload: Payload, user: User, input: NewPart) => {
+  const name = cleanName(input.name)
+  if (!name) throw new Error('Give the part a name')
+  if (!Number.isInteger(input.quantity) || input.quantity < 0) {
+    throw new Error('Quantity must be a whole number')
+  }
+  checkMinStock(input.minStock)
+  await refuseDuplicate(payload, user, name)
 
   return withTransaction(
     payload,
@@ -83,4 +96,61 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
     },
     { ...user, collection: 'users' },
   )
+}
+
+export type PartEdit = {
+  name: string
+  /** As typed: "10k", "100nF", "3.3V"; empty clears it */
+  value?: string
+  package?: string
+  mpn?: string
+  manufacturer?: string
+  category?: string
+  minStock?: number | null
+  notes?: string
+}
+
+/** Updates a part's description. Stock stays with the ledger and is never touched here. */
+export const updatePart = async (payload: Payload, user: User, id: string, input: PartEdit) => {
+  const current = await payload.findByID({
+    collection: 'parts',
+    id,
+    depth: 0,
+    user,
+    overrideAccess: false,
+  })
+  const name = cleanName(input.name)
+  if (!name) throw new Error('Give the part a name')
+  checkMinStock(input.minStock)
+  await refuseDuplicate(payload, user, name, id)
+
+  const typed = input.value?.trim() ?? ''
+  let value: Pick<Part, 'value' | 'unit'> = { value: current.value, unit: current.unit }
+  // Untouched values stay as they are, even ones the parser can't read back (mAh, pcs)
+  if (typed !== (formatValue(current.value, current.unit) ?? '')) {
+    if (!typed) value = { value: null, unit: null }
+    else {
+      const parsed = parseValue(typed.replace(/\s+/g, ''))
+      if (!parsed) throw new Error(`Couldn’t read the value “${typed}”. Try 10k, 100nF or 3.3V`)
+      value = { value: parsed.value, unit: parsed.unit as Part['unit'] }
+    }
+  }
+
+  const blank = (v?: string) => v?.trim() || null
+  return payload.update({
+    collection: 'parts',
+    id,
+    data: {
+      name,
+      ...value,
+      package: blank(input.package),
+      mpn: blank(input.mpn),
+      manufacturer: blank(input.manufacturer),
+      category: input.category || null,
+      minStock: input.minStock ?? null,
+      notes: blank(input.notes),
+    },
+    user,
+    overrideAccess: false,
+  })
 }

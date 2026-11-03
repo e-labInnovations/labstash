@@ -9,7 +9,7 @@ import { Icon, type IconName } from './Icon'
 
 const tabs: Array<{ href: string; label: string; icon: IconName; match: RegExp }> = [
   { href: '/', label: 'Home', icon: 'home', match: /^\/($|search|parts|low-stock)/ },
-  { href: '/locations', label: 'Boxes', icon: 'box', match: /^\/(locations|l\/)/ },
+  { href: '/locations', label: 'Boxes', icon: 'box', match: /^\/(locations|l\/|labels)/ },
   { href: '/scan', label: 'Scan', icon: 'scan', match: /^\/scan/ },
   { href: '/inbox', label: 'Inbox', icon: 'inbox', match: /^\/inbox/ },
   { href: '/orders', label: 'Orders', icon: 'orders', match: /^\/orders/ },

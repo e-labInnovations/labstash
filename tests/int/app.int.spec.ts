@@ -10,7 +10,9 @@ import { receiveLines } from '@/importers/receiveOrder'
 import { findInbox, locationContents } from '@/lib/queries'
 import { photosFor, searchParts } from '@/lib/search'
 import { compartmentCodes, createBox } from '@/lib/boxes'
-import { createPart } from '@/lib/parts'
+import { labelsFor } from '@/lib/labels'
+import { createPart, updatePart } from '@/lib/parts'
+import { putAwayAll } from '@/lib/putAway'
 import type { User } from '@/payload-types'
 
 import { freshPayload } from './setup'
@@ -257,6 +259,66 @@ describe('app flows as a user', () => {
       where: { part: { equals: empty.id } },
     })
     expect(none.totalDocs).toBe(0)
+  })
+
+  it('edits a part: re-reads the value, keeps stock, refuses a taken name', async () => {
+    const { id } = await createPart(payload, user, { name: 'Edit me', quantity: 7 })
+    await createPart(payload, user, { name: 'Taken name', quantity: 0 })
+
+    const edited = await updatePart(payload, user, id, {
+      name: 'NE555 timer',
+      value: '4k7',
+      package: 'DIP-8',
+      minStock: 10,
+    })
+    expect(edited).toMatchObject({
+      name: 'NE555 timer',
+      value: 4700,
+      unit: 'Ω',
+      package: 'DIP-8',
+      minStock: 10,
+      totalQuantity: 7,
+      lowStock: true,
+    })
+
+    // an untouched value the parser can't read back stays as it is
+    await payload.update({
+      collection: 'parts',
+      id,
+      data: { value: 1200, unit: 'mAh' },
+      overrideAccess: true,
+    })
+    const kept = await updatePart(payload, user, id, { name: 'NE555 timer', value: '1200 mAh' })
+    expect(kept).toMatchObject({ value: 1200, unit: 'mAh', minStock: null, lowStock: false })
+
+    await expect(updatePart(payload, user, id, { name: 'Taken name' })).rejects.toThrow(/exists/)
+    await expect(updatePart(payload, user, id, { name: 'x', value: 'lots' })).rejects.toThrow(
+      /read the value/,
+    )
+  })
+
+  it('puts several Inbox parts into one box at once, all of each', async () => {
+    const a = await createPart(payload, user, { name: 'Bulk A', quantity: 3 })
+    const b = await createPart(payload, user, { name: 'Bulk B', quantity: 5 })
+    await createBox(payload, user, { code: 'B11', columns: 1, compartments: 0 })
+    const box = await payload.find({
+      collection: 'locations',
+      where: { code: { equals: 'B11' } },
+      overrideAccess: true,
+      depth: 0,
+    })
+    const to = box.docs[0].id
+
+    expect(await putAwayAll(payload, user, [a.id, b.id], to)).toEqual({ parts: 2, pcs: 8 })
+    const labels = await labelsFor(payload, user, [b.id, a.id])
+    expect(labels.map((l) => [l.name, l.where])).toEqual([
+      ['Bulk B', 'B11'],
+      ['Bulk A', 'B11'],
+    ])
+    // nothing left in INBOX for them
+    await expect(putAwayAll(payload, user, [a.id], to)).rejects.toThrow(/no longer/)
+    const inbox = (await findInbox(payload, user))!
+    await expect(putAwayAll(payload, user, [a.id], inbox.id)).rejects.toThrow(/other than INBOX/)
   })
 
   it('a user cannot write stock rows directly', async () => {

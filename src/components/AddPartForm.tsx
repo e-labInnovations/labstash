@@ -6,18 +6,15 @@ import React, { startTransition, useActionState, useEffect, useState } from 'rea
 import { addPart, type ActionState } from '@/app/(app)/actions'
 import type { CategoryOption, LocationOption } from '@/lib/queries'
 
-import { FormStatus, LocationPicker, QtyStepper, SubmitButton, rememberLocation } from './fields'
-
-const input = 'h-12 w-full rounded-xl border border-line bg-surface px-4'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[15px] text-muted">{label}</span>
-      {children}
-    </label>
-  )
-}
+import {
+  Field,
+  FormStatus,
+  LocationPicker,
+  QtyStepper,
+  SubmitButton,
+  inputClass,
+  rememberLocation,
+} from './fields'
 
 /** A part that didn't come from an order, with however many you have and where they are. */
 export function AddPartForm({
@@ -61,7 +58,7 @@ export function AddPartForm({
           defaultValue={name}
           placeholder="10k resistor 1/4 W"
           autoComplete="off"
-          className={input}
+          className={inputClass}
         />
       </Field>
       <p className="-mt-3 text-[15px] text-muted">
@@ -70,15 +67,20 @@ export function AddPartForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Package">
-          <input name="package" placeholder="0603, TO-220" autoComplete="off" className={input} />
+          <input
+            name="package"
+            placeholder="0603, TO-220"
+            autoComplete="off"
+            className={inputClass}
+          />
         </Field>
         <Field label="Part number">
-          <input name="mpn" placeholder="NE555P" autoComplete="off" className={input} />
+          <input name="mpn" placeholder="NE555P" autoComplete="off" className={inputClass} />
         </Field>
       </div>
 
       <Field label="Category">
-        <select name="category" defaultValue="" className={input}>
+        <select name="category" defaultValue="" className={inputClass}>
           <option value="">None</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -121,11 +123,16 @@ export function AddPartForm({
             pattern="[0-9]*"
             placeholder="Optional"
             autoComplete="off"
-            className={input}
+            className={inputClass}
           />
         </Field>
         <Field label="Where from">
-          <input name="note" placeholder="Salvaged, gift…" autoComplete="off" className={input} />
+          <input
+            name="note"
+            placeholder="Salvaged, gift…"
+            autoComplete="off"
+            className={inputClass}
+          />
         </Field>
       </div>
 

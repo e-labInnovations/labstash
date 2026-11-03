@@ -170,6 +170,17 @@ export function LocationPicker({
   )
 }
 
+export const inputClass = 'h-12 w-full rounded-xl border border-line bg-surface px-4'
+
+export function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[15px] text-muted">{label}</span>
+      {children}
+    </label>
+  )
+}
+
 export function FormStatus({ state }: { state: { ok: string } | { error: string } | null }) {
   if (!state || !('error' in state)) return null
   return (

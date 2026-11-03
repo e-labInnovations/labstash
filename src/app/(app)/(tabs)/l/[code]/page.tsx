@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { AddPhoto } from '@/components/AddPhoto'
+import { Icon } from '@/components/Icon'
 import { Empty, PageHeader, PartRow, Section } from '@/components/ui'
+import { idOf } from '@/ledger/rules'
 import { locationContents } from '@/lib/queries'
 import { requireSession } from '@/lib/session'
 import type { Location, Part, Stock } from '@/payload-types'
@@ -25,6 +28,17 @@ export default async function LocationPage({ params }: { params: Promise<{ code:
   }
 
   const { location, here, children } = data
+  const photo = location.photo
+    ? await payload
+        .findByID({
+          collection: 'media',
+          id: idOf(location.photo)!,
+          depth: 0,
+          user,
+          overrideAccess: false,
+        })
+        .catch(() => null)
+    : null
   const trail = location.breadcrumbs?.slice(0, -1) ?? []
   const parentCode = trail.at(-1)?.label
 
@@ -38,7 +52,32 @@ export default async function LocationPage({ params }: { params: Promise<{ code:
           {trail.length > 0 && <span>In {trail.map((b) => b.label).join(' › ')}. </span>}
           {location.name}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href={`/labels?box=${encodeURIComponent(trail[0]?.label ?? location.code)}`}
+            className="flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[15px] font-semibold"
+          >
+            <Icon name="print" className="size-5" />
+            Print labels
+          </Link>
+          <AddPhoto
+            location={location.id}
+            alt={location.name ?? location.code}
+            label={photo ? 'New photo' : 'Add photo'}
+          />
+        </div>
       </PageHeader>
+
+      {photo?.url && (
+        <a href={photo.url} target="_blank" rel="noreferrer" className="mb-2 block lg:max-w-md">
+          {/* eslint-disable-next-line @next/next/no-img-element -- served by Payload/Blob */}
+          <img
+            src={photo.variants?.thumbnail?.url ?? photo.url}
+            alt={location.name ?? location.code}
+            className="aspect-[4/3] w-full rounded-2xl border border-line bg-white object-cover"
+          />
+        </a>
+      )}
 
       {children.length === 0 ? (
         <Section title="In here">

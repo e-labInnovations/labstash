@@ -14,6 +14,10 @@ const paths = {
   minus: 'M6 12h12',
   plus: 'M12 6v12M6 12h12',
   close: 'M6 6l12 12M18 6L6 18',
+  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+  edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
+  print: 'M7 9V4h10v5M7 17H4v-8h16v8h-3M7 14h10v6H7z',
+  check: 'M5 12.5l4.5 4.5L19 7',
 } as const
 
 export type IconName = keyof typeof paths

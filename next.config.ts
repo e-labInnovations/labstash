@@ -7,6 +7,10 @@ const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Photos are shrunk in the browser to well under this; Vercel caps bodies at 4.5 MB
+    serverActions: { bodySizeLimit: '4mb' },
+  },
   images: {
     localPatterns: [
       {

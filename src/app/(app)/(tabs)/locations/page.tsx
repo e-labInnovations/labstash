@@ -2,6 +2,7 @@ import Link from 'next/link'
 import React from 'react'
 
 import { AddBox } from '@/components/AddBox'
+import { Icon } from '@/components/Icon'
 import { Empty } from '@/components/ui'
 import { nextBoxCode } from '@/lib/boxes'
 import { topLevelLocations } from '@/lib/queries'
@@ -20,7 +21,16 @@ export default async function LocationsPage() {
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight lg:text-[34px]">
           Boxes
         </h1>
-        <AddBox suggestedCode={suggested} />
+        <div className="flex gap-2">
+          <Link
+            href="/labels"
+            className="flex h-11 items-center gap-1.5 rounded-xl border border-line px-4 font-semibold"
+          >
+            <Icon name="print" className="size-5" />
+            Labels
+          </Link>
+          <AddBox suggestedCode={suggested} />
+        </div>
       </div>
       {locations.length === 0 ? (
         <Empty>No boxes yet. Use Add box to create one with its compartments.</Empty>
