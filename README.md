@@ -146,7 +146,7 @@ Integration tests wipe and rebuild `<database>_test` (derived from `DATABASE_URL
 ## Deploying to Vercel
 
 1. Import the repository in Vercel. [`vercel.json`](vercel.json) sets the build command to `npm run ci`, so migrations run on every deploy.
-2. **Storage → Neon**: creates the database and sets `DATABASE_URL`. Pick the region closest to you and set the same region in `vercel.json` (`bom1`, Mumbai, by default).
+2. **Storage → Neon**: creates the database and sets `DATABASE_URL`. Set `regions` in `vercel.json` to the **same region as the database** (`iad1` here). Every page makes several queries, so a function far from its database pays that distance on each one.
 3. **Storage → Blob**: sets `BLOB_READ_WRITE_TOKEN`.
 4. Add `PAYLOAD_SECRET` under Environment Variables.
 5. Deploy, then open `/admin` to create the first user.
