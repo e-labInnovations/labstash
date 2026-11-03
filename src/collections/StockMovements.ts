@@ -37,14 +37,23 @@ export const StockMovements: CollectionConfig = {
     afterChange: [
       async ({ doc, operation, req }) => {
         if (operation !== 'create') return doc
+        // A caller's `select` also trims `doc` (the MCP plugin asks for the id only),
+        // so read the full movement back before applying it
+        const movement = await req.payload.findByID({
+          collection: 'stock-movements',
+          id: doc.id,
+          depth: 0,
+          overrideAccess: true,
+          req,
+        })
         await applyMovement(
           {
-            type: doc.type,
-            quantity: doc.quantity,
-            part: doc.part,
-            from: idOf(doc.from),
-            to: idOf(doc.to),
-            purchaseLine: idOf(doc.purchaseLine),
+            type: movement.type,
+            quantity: movement.quantity,
+            part: movement.part,
+            from: idOf(movement.from),
+            to: idOf(movement.to),
+            purchaseLine: idOf(movement.purchaseLine),
           },
           req,
         )

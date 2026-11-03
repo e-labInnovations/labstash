@@ -105,6 +105,38 @@ describe('stock ledger', () => {
     expect(await stockAt(boxA)).toBe(5)
   })
 
+  it('applies a movement created with a narrow select, as the MCP plugin does', async () => {
+    // Regression: `select` also trims the doc that afterChange hooks receive
+    await payload.create({
+      collection: 'stock-movements',
+      overrideAccess: true,
+      data: {
+        type: 'adjust',
+        part,
+        quantity: 2,
+        to: boxA,
+        note: 'via MCP',
+        occurredAt: new Date().toISOString(),
+      },
+      select: { type: true },
+    })
+    expect(await stockAt(boxA)).toBe(7)
+    await payload.create({
+      collection: 'stock-movements',
+      overrideAccess: true,
+      data: {
+        type: 'adjust',
+        part,
+        quantity: 2,
+        from: boxA,
+        note: 'undo',
+        occurredAt: new Date().toISOString(),
+      },
+      select: { type: true },
+    })
+    expect(await stockAt(boxA)).toBe(5)
+  })
+
   it('movements cannot be edited or deleted through the API', async () => {
     const { docs } = await payload.find({
       collection: 'stock-movements',
