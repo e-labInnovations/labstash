@@ -33,8 +33,8 @@ export default async function SearchPage({
                 : `${results.length} ${results.length === 1 ? 'match' : 'matches'}`}
             </p>
             <ul className="lg:grid lg:grid-cols-2 lg:gap-x-10">
-              {results.map(({ part, stock }) => (
-                <PartRow key={part.id} part={part} stock={stock} />
+              {results.map(({ part, stock, thumb }) => (
+                <PartRow key={part.id} part={part} stock={stock} thumb={thumb} />
               ))}
             </ul>
           </>

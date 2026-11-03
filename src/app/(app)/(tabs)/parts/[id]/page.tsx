@@ -4,6 +4,7 @@ import React from 'react'
 
 import { Icon } from '@/components/Icon'
 import { PartActions } from '@/components/PartActions'
+import { PhotoGallery } from '@/components/PhotoGallery'
 import { PageHeader, Quantity, Section } from '@/components/ui'
 import { formatValue } from '@/lib/format'
 import { allLocations, partDetail } from '@/lib/queries'
@@ -18,7 +19,7 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
     allLocations(payload, user),
   ])
   if (!detail) notFound()
-  const { part, stock, sources } = detail
+  const { part, stock, sources, photos } = detail
 
   const category = part.category as Category | null
   const datasheet = part.datasheet as Media | null
@@ -60,6 +61,7 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
         </aside>
 
         <div className="lg:col-start-1 lg:row-start-1 lg:[&>section:first-child]:mt-0">
+          <PhotoGallery photos={photos} name={part.name} />
           <Section title="Where it is">
             {stock.length === 0 ? (
               <p className="text-muted">None on hand. Use Fix count if you find some.</p>

@@ -102,6 +102,7 @@ export interface Config {
     parts: {
       stock: 'stock';
       supplierParts: 'supplier-parts';
+      images: 'media';
     };
     purchases: {
       lines: 'purchase-lines';
@@ -193,7 +194,6 @@ export interface Part {
   totalQuantity?: number | null;
   lowStock?: boolean | null;
   datasheet?: (string | null) | Media;
-  images?: (string | Media)[] | null;
   model3d?: (string | null) | Media;
   /**
    * Library:Symbol
@@ -211,6 +211,11 @@ export interface Part {
   };
   supplierParts?: {
     docs?: (string | SupplierPart)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  images?: {
+    docs?: (string | Media)[];
     hasNextPage?: boolean;
     totalDocs?: number;
   };
@@ -318,6 +323,7 @@ export interface Media {
   id: string;
   alt?: string | null;
   kind?: ('image' | 'datasheet' | 'model3d' | 'kicad' | 'other') | null;
+  part?: (string | null) | Part;
   _h_folders?: (string | null) | Folder;
   _h_tags?: (string | Tag)[] | null;
   prefix?: string | null;
@@ -351,6 +357,18 @@ export interface Media {
   };
   focalX?: number | null;
   focalY?: number | null;
+  variants?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -750,13 +768,13 @@ export interface PartsSelect<T extends boolean = true> {
   totalQuantity?: T;
   lowStock?: T;
   datasheet?: T;
-  images?: T;
   model3d?: T;
   kicadSymbol?: T;
   kicadFootprint?: T;
   notes?: T;
   stock?: T;
   supplierParts?: T;
+  images?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -915,6 +933,7 @@ export interface SupplierPartsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   kind?: T;
+  part?: T;
   _h_folders?: T;
   _h_tags?: T;
   prefix?: T;
@@ -944,6 +963,22 @@ export interface MediaSelect<T extends boolean = true> {
       };
   focalX?: T;
   focalY?: T;
+  variants?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+              prefix?: T;
+              _objectKey?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

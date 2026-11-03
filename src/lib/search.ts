@@ -79,5 +79,44 @@ export const withLocations = async <P extends { id: string }>(
     list.push({ code, quantity: row.quantity, approximate: Boolean(row.approximate) })
     byPart.set(partId, list)
   }
-  return parts.map((part) => ({ part, stock: byPart.get(part.id) ?? [] }))
+  const photos = await photosFor(
+    payload,
+    user,
+    parts.map((p) => p.id),
+  )
+  return parts.map((part) => ({
+    part,
+    stock: byPart.get(part.id) ?? [],
+    thumb: photos.get(part.id)?.[0]?.thumb ?? null,
+  }))
+}
+
+export type Photo = { id: string; url: string; thumb: string; alt: string | null }
+
+/** Image files attached to each part (media.part), oldest first, by part id. */
+export const photosFor = async (payload: Payload, user: User, partIds: string[]) => {
+  const byPart = new Map<string, Photo[]>()
+  if (partIds.length === 0) return byPart
+  const { docs } = await payload.find({
+    collection: 'media',
+    where: { and: [{ part: { in: partIds } }, { mimeType: { contains: 'image/' } }] },
+    pagination: false,
+    sort: 'createdAt',
+    depth: 0,
+    user,
+    overrideAccess: false,
+  })
+  for (const m of docs) {
+    if (!m.url || !m.part) continue
+    const partId = typeof m.part === 'object' ? m.part.id : m.part
+    const list = byPart.get(partId) ?? []
+    list.push({
+      id: m.id,
+      url: m.url,
+      thumb: m.variants?.thumbnail?.url ?? m.url,
+      alt: m.alt ?? null,
+    })
+    byPart.set(partId, list)
+  }
+  return byPart
 }

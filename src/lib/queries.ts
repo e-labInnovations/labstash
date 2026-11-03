@@ -3,7 +3,7 @@ import type { Payload } from 'payload'
 import { INBOX_CODE } from '@/collections/Locations'
 import type { Location, Part, Stock, User } from '@/payload-types'
 
-import { withLocations } from './search'
+import { photosFor, withLocations } from './search'
 
 // Every read runs as the signed-in user so collection access applies.
 const as = (user: User) => ({ user, overrideAccess: false }) as const
@@ -99,8 +99,11 @@ export const partDetail = async (payload: Payload, user: User, id: string) => {
     populate: { locations: { code: true, name: true, breadcrumbs: true } },
     ...as(user),
   })
-  const sources = (await sourcesFor(payload, user, [id])).get(id) ?? []
-  return { part, stock: stock as Array<Stock & { location: Location }>, sources }
+  const [sources, photos] = await Promise.all([
+    sourcesFor(payload, user, [id]).then((m) => m.get(id) ?? []),
+    photosFor(payload, user, [id]).then((m) => m.get(id) ?? []),
+  ])
+  return { part, stock: stock as Array<Stock & { location: Location }>, sources, photos }
 }
 
 export type Source = { id: string; sku: string; url: string | null; supplier: string }

@@ -95,7 +95,6 @@ export const Parts: CollectionConfig = {
       label: 'Files & CAD',
       fields: [
         { name: 'datasheet', type: 'upload', relationTo: 'media' },
-        { name: 'images', type: 'upload', relationTo: 'media', hasMany: true },
         { name: 'model3d', type: 'upload', relationTo: 'media', label: '3D model' },
         { name: 'kicadSymbol', type: 'text', admin: { description: 'Library:Symbol' } },
         { name: 'kicadFootprint', type: 'text', admin: { description: 'Library:Footprint' } },
@@ -115,6 +114,13 @@ export const Parts: CollectionConfig = {
       name: 'supplierParts',
       type: 'join',
       collection: 'supplier-parts',
+      on: 'part',
+    },
+    {
+      // Photos and other files whose `part` points here (set on the media record)
+      name: 'images',
+      type: 'join',
+      collection: 'media',
       on: 'part',
     },
   ],

@@ -1,13 +1,15 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { Payload } from 'payload'
+import sharp from 'sharp'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { STORE_URL, parseEtstoreOrder } from '@/importers/etstore'
 import { importOrder } from '@/importers/importOrder'
 import { receiveLines } from '@/importers/receiveOrder'
 import { findInbox, locationContents } from '@/lib/queries'
-import { searchParts } from '@/lib/search'
+import { photosFor, searchParts } from '@/lib/search'
+import { compartmentCodes, createBox } from '@/lib/boxes'
 import type { User } from '@/payload-types'
 
 import { freshPayload } from './setup'
@@ -134,6 +136,46 @@ describe('app flows as a user', () => {
     const found = await searchParts(payload, user, 'CH32V003J4M6')
     const mcu = found.find((r) => r.part.id === mcuPart)!
     expect(mcu.stock).toEqual([{ code: 'B03-17', quantity: 2, approximate: false }])
+  })
+
+  it('adds a box with numbered compartments in one go, and refuses duplicates', async () => {
+    const box = await createBox(payload, user, {
+      code: ' b09 ',
+      name: 'Caps',
+      columns: 4,
+      compartments: 8,
+    })
+    expect(box.code).toBe('B09')
+    const view = await locationContents(payload, user, 'B09')
+    expect(view!.location).toMatchObject({ name: 'Caps', kind: 'box', columns: 4 })
+    expect(view!.children.map((c) => c.location.code)).toEqual(compartmentCodes('B09', 8))
+
+    await expect(
+      createBox(payload, user, { code: 'B09', columns: 4, compartments: 2 }),
+    ).rejects.toThrow(/already used/)
+  })
+
+  it('shows photos attached to a part through media.part, with a thumbnail', async () => {
+    const mcuPart = (await lineFor('ET7879')).part as string
+    const png = await sharp({
+      create: { width: 800, height: 600, channels: 3, background: '#1f5c46' },
+    })
+      .png()
+      .toBuffer()
+    await payload.create({
+      collection: 'media',
+      data: { alt: 'CH32V003J4M6', part: mcuPart },
+      file: { data: png, mimetype: 'image/png', name: 'ch32v003.png', size: png.length },
+      user,
+      overrideAccess: false,
+    })
+
+    const photos = (await photosFor(payload, user, [mcuPart])).get(mcuPart)!
+    expect(photos).toHaveLength(1)
+    expect(photos[0].thumb).not.toBe(photos[0].url)
+
+    const found = await searchParts(payload, user, 'CH32V003J4M6')
+    expect(found.find((r) => r.part.id === mcuPart)!.thumb).toBe(photos[0].thumb)
   })
 
   it('a user cannot write stock rows directly', async () => {

@@ -28,6 +28,7 @@ const CAN_CREATE = new Set([
   'supplier-parts',
   'purchases',
   'purchase-lines',
+  'media',
 ])
 
 // Users are not exposed at all. (Login and password tools are opt-in, so they stay off.)

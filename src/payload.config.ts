@@ -54,6 +54,13 @@ export default buildConfig({
   },
   plugins,
   upload: {
-    transformers: [sharpTransformer()],
+    transformers: [
+      sharpTransformer({
+        // Small copy for lists and cards; the original stays for the part page
+        collections: {
+          media: { variants: [{ name: 'thumbnail', width: 400, withoutEnlargement: true }] },
+        },
+      }),
+    ],
   },
 })

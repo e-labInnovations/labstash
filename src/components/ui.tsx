@@ -104,16 +104,30 @@ type PartLike = {
 export function PartRow({
   part,
   stock,
+  thumb,
   trailing,
 }: {
   part: PartLike
   stock?: StockChip[]
+  /** Photo thumbnail; rows without a photo simply have no image */
+  thumb?: string | null
   trailing?: React.ReactNode
 }) {
   const value = formatValue(part.value, part.unit)
   return (
     <li className="border-b border-line py-3 last:border-0">
       <div className="flex items-start gap-3">
+        {thumb && (
+          <Link href={`/parts/${part.id}`} className="shrink-0" tabIndex={-1} aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element -- served by Payload/Blob, already resized */}
+            <img
+              src={thumb}
+              alt=""
+              loading="lazy"
+              className="size-12 rounded-lg border border-line bg-white object-contain"
+            />
+          </Link>
+        )}
         <Link href={`/parts/${part.id}`} className="min-w-0 flex-1">
           <span className="line-clamp-2 font-medium">{part.name}</span>
           {(value || part.package) && (
