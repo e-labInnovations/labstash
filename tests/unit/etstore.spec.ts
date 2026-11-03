@@ -93,6 +93,8 @@ describe('guessPackage', () => {
     ['LM358DT SOIC8 ST SMD op-amp', 'SOIC-8'],
     ['CH32V003J4M6 SOP8 RISC-V SMD WCH', 'SOP-8'],
     ['DOD4185 TO-252 DOINGTER 40V', 'TO-252'],
+    ['CH32V003F4P6 TSSOP-20 RISC-V Microcontroller WCH', 'TSSOP-20'],
+    ['CH32X035G8R6 WCH QSOP28', 'QSOP-28'],
     ['Water Pump with dual Nozzle', null],
   ])('%s → %s', (title, pkg) => {
     expect(guessPackage(title)).toBe(pkg)
@@ -110,6 +112,11 @@ describe('guessCategory', () => {
     ],
     ['CH32V003J4M6 SOP8 RISC-V SMD WCH Micro controller', ['ICs', 'Microcontrollers']],
     ['Photo transistor 5MM PT333-3B IR receiver', ['Sensors']],
+    ['12MM KAPTON Tape', ['Tools', 'Consumables']],
+    ['CH340G SOP16 WCH smd USB to TTL converter UART', ['ICs', 'Interface']],
+    ['USB Cable A to B 1M for ArduinoUNO or MEGA', ['Electromechanical', 'Cables']],
+    ['CH32X035G8R6 WCH QSOP28', ['ICs', 'Microcontrollers']],
+    ['USB TYPE-C 16PIN SMD(073) Female Socket SMD', ['Electromechanical', 'Connectors']],
     ['L78M05CDT-TR DPAK TO252 smd ST 7805 5V 78M05 0.5A', ['ICs', 'Voltage regulators']],
     ['AO3401 A19T SOT23 SMD MOSFET P Channel', ['Discretes', 'Transistors']],
     ['0603 RED SMD LED COLOR', ['Optoelectronics', 'LEDs']],
