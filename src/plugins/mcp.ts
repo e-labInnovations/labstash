@@ -32,8 +32,12 @@ const hiddenTools = {
   getCollectionSchema: false,
 } as const
 
+// TEMPORARY: lets an assistant restructure box B01. Revert right after.
+const fullLocationTools = { duplicate: false, restoreVersion: false, getUploadInstructions: false } as const
+
 const toolsFor = (slug: string) => {
   if (slug === Users.slug) return hiddenTools
+  if (slug === 'locations') return fullLocationTools
   return CAN_CREATE.has(slug) ? appendOnlyTools : readOnlyTools
 }
 
