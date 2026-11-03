@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
+import { createBox } from '@/lib/boxes'
 import { requireSession } from '@/lib/session'
 
 export type ActionState = { ok: string } | { error: string } | null
@@ -72,6 +73,22 @@ export async function receive(_: ActionState, form: FormData): Promise<ActionSta
     const parts = [`Received ${received} pcs into INBOX`]
     if (cancelled) parts.push(`${cancelled} marked missing`)
     return { ok: parts.join(', ') }
+  } catch (e) {
+    return { error: message(e) }
+  }
+}
+
+export async function addBox(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  try {
+    const box = await createBox(payload, user, {
+      code: str(form.get('code')) ?? '',
+      name: str(form.get('name')),
+      columns: num(form.get('columns')),
+      compartments: num(form.get('compartments')),
+    })
+    revalidatePath('/', 'layout')
+    return { ok: box.code }
   } catch (e) {
     return { error: message(e) }
   }

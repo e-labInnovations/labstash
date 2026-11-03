@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import React from 'react'
 
-import { Empty, PageHeader } from '@/components/ui'
+import { AddBox } from '@/components/AddBox'
+import { Empty } from '@/components/ui'
+import { nextBoxCode } from '@/lib/boxes'
 import { topLevelLocations } from '@/lib/queries'
 import { requireSession } from '@/lib/session'
 
@@ -10,21 +12,18 @@ export const metadata = { title: 'Boxes' }
 export default async function LocationsPage() {
   const { payload, user } = await requireSession()
   const locations = await topLevelLocations(payload, user)
+  const suggested = nextBoxCode(locations.map((l) => l.location.code))
 
   return (
     <>
-      <PageHeader title="Boxes" />
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1 className="text-[28px] leading-tight font-semibold tracking-tight lg:text-[34px]">
+          Boxes
+        </h1>
+        <AddBox suggestedCode={suggested} />
+      </div>
       {locations.length === 0 ? (
-        <Empty>
-          No boxes yet. Add them in the{' '}
-          <Link
-            href="/admin/collections/locations/create"
-            className="font-semibold text-mask underline underline-offset-4"
-          >
-            admin
-          </Link>
-          , with compartments as children.
-        </Empty>
+        <Empty>No boxes yet. Use Add box to create one with its compartments.</Empty>
       ) : (
         <ul className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-3">
           {locations.map(({ location, children }) => (
