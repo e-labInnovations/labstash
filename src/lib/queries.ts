@@ -249,3 +249,21 @@ export const purchaseWithLines = async (payload: Payload, user: User, id: string
 }
 
 export { withLocations }
+
+/** Every category with its full path ("Passives › Resistors"), sorted by path. */
+export const allCategories = async (payload: Payload, user: User) => {
+  const { docs } = await payload.find({
+    collection: 'categories',
+    pagination: false,
+    depth: 0,
+    select: { name: true, breadcrumbs: true },
+    ...as(user),
+  })
+  return docs
+    .map((c) => ({
+      id: c.id,
+      label: c.breadcrumbs?.map((b) => b.label).join(' › ') || c.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+}
+export type CategoryOption = Awaited<ReturnType<typeof allCategories>>[number]

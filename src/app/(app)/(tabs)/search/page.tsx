@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import React from 'react'
 
 import { Empty, PartRow, SearchBar } from '@/components/ui'
@@ -24,7 +25,15 @@ export default async function SearchPage({
             Search by name, part number, value or package. “10k 0603” finds 10 kΩ resistors in 0603.
           </p>
         ) : results.length === 0 ? (
-          <Empty>Nothing matches “{q}”. Try fewer words, or just the value like “100nF”.</Empty>
+          <Empty>
+            Nothing matches “{q}”. Try fewer words, or just the value like “100nF”.{' '}
+            <Link
+              href={`/parts/new?name=${encodeURIComponent(q.trim())}`}
+              className="font-semibold text-mask underline underline-offset-4"
+            >
+              Add it as a new part
+            </Link>
+          </Empty>
         ) : (
           <>
             <p className="mb-1 text-[15px] text-muted">

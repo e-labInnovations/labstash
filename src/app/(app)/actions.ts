@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
 import { createBox } from '@/lib/boxes'
+import { createPart } from '@/lib/parts'
 import { requireSession } from '@/lib/session'
 
 export type ActionState = { ok: string } | { error: string } | null
@@ -89,6 +90,27 @@ export async function addBox(_: ActionState, form: FormData): Promise<ActionStat
     })
     revalidatePath('/', 'layout')
     return { ok: box.code }
+  } catch (e) {
+    return { error: message(e) }
+  }
+}
+
+export async function addPart(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const minStock = str(form.get('minStock'))
+  try {
+    const part = await createPart(payload, user, {
+      name: str(form.get('name')) ?? '',
+      package: str(form.get('package')),
+      mpn: str(form.get('mpn')),
+      category: str(form.get('category')),
+      minStock: minStock === undefined ? undefined : Number(minStock),
+      quantity: num(form.get('quantity')),
+      location: str(form.get('location')),
+      note: str(form.get('note')),
+    })
+    revalidatePath('/', 'layout')
+    return { ok: part.id }
   } catch (e) {
     return { error: message(e) }
   }

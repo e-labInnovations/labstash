@@ -10,6 +10,7 @@ import { receiveLines } from '@/importers/receiveOrder'
 import { findInbox, locationContents } from '@/lib/queries'
 import { photosFor, searchParts } from '@/lib/search'
 import { compartmentCodes, createBox } from '@/lib/boxes'
+import { createPart } from '@/lib/parts'
 import type { User } from '@/payload-types'
 
 import { freshPayload } from './setup'
@@ -176,6 +177,86 @@ describe('app flows as a user', () => {
 
     const found = await searchParts(payload, user, 'CH32V003J4M6')
     expect(found.find((r) => r.part.id === mcuPart)!.thumb).toBe(photos[0].thumb)
+  })
+
+  it('adds a part without an order: guesses value and package, books stock as an adjust', async () => {
+    const box = await createBox(payload, user, {
+      code: 'B10',
+      columns: 2,
+      compartments: 2,
+    })
+    const slot = await payload.find({
+      collection: 'locations',
+      overrideAccess: true,
+      where: { code: { equals: 'B10-01' } },
+      depth: 0,
+    })
+    const { id } = await createPart(payload, user, {
+      name: '  4.7K OHM 1206 resistor ',
+      quantity: 12,
+      location: slot.docs[0].id,
+      minStock: 3,
+    })
+    const part = await payload.findByID({
+      collection: 'parts',
+      id,
+      overrideAccess: true,
+      depth: 0,
+    })
+    expect(part).toMatchObject({
+      name: '4.7K OHM 1206 resistor',
+      value: 4700,
+      unit: 'Ω',
+      package: '1206',
+      totalQuantity: 12,
+      lowStock: false,
+    })
+    const moves = await payload.find({
+      collection: 'stock-movements',
+      overrideAccess: true,
+      where: { part: { equals: id } },
+      depth: 0,
+    })
+    expect(moves.docs).toMatchObject([
+      {
+        type: 'adjust',
+        quantity: 12,
+        to: slot.docs[0].id,
+        note: 'Added without an order',
+      },
+    ])
+    expect(box.code).toBe('B10')
+
+    await expect(
+      createPart(payload, user, {
+        name: '4.7K OHM 1206 resistor',
+        quantity: 1,
+      }),
+    ).rejects.toThrow(/already exists/)
+  })
+
+  it('adds a part with no location into INBOX, and with zero stock books nothing', async () => {
+    const { id } = await createPart(payload, user, { name: 'Mystery relay', quantity: 4 })
+    const inbox = await findInbox(payload, user)
+    expect(inbox).not.toBeNull()
+    const stock = await payload.find({
+      collection: 'stock',
+      overrideAccess: true,
+      where: { part: { equals: id } },
+      depth: 0,
+    })
+    expect(stock.docs).toMatchObject([{ location: inbox?.id, quantity: 4 }])
+
+    const empty = await createPart(payload, user, {
+      name: 'Wishlist part',
+      quantity: 0,
+    })
+    const none = await payload.count({
+      collection: 'stock-movements',
+      overrideAccess: true,
+      where: { part: { equals: empty.id } },
+    })
+    expect(none.totalDocs).toBe(0)
   })
 
   it('a user cannot write stock rows directly', async () => {

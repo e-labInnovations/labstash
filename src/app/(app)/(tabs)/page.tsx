@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { Icon } from '@/components/Icon'
 import { PartRow, SearchBar, Section } from '@/components/ui'
 import { homeStats, lowStockParts, recentMovements } from '@/lib/queries'
 import { requireSession } from '@/lib/session'
@@ -21,7 +22,16 @@ export default async function HomePage() {
           <span className="lg:hidden">LabStash</span>
           <span className="hidden lg:inline">Your stash</span>
         </h1>
-        <span className="text-[15px] text-muted">{stats.parts} parts</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[15px] text-muted">{stats.parts} parts</span>
+          <Link
+            href="/parts/new"
+            className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-4 font-semibold text-mask-ink"
+          >
+            <Icon name="plus" className="size-5" />
+            Add part
+          </Link>
+        </div>
       </div>
       <SearchBar />
 
