@@ -19,48 +19,46 @@ export default async function HomePage() {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-[28px] font-semibold tracking-tight lg:text-[34px]">
-          <span className="lg:hidden">LabStash</span>
-          <span className="hidden lg:inline">Your stash</span>
-        </h1>
-        <div className="flex shrink-0 items-center gap-2 lg:gap-3">
-          <Link
-            href="/parts"
-            className="flex h-11 items-center rounded-xl border border-line px-3 font-semibold whitespace-nowrap lg:px-4"
-          >
-            {stats.parts} {stats.parts === 1 ? 'part' : 'parts'}
-          </Link>
-          <Link
-            href="/parts/new"
-            className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-3 font-semibold whitespace-nowrap text-mask-ink lg:px-4"
-          >
-            <Icon name="plus" className="size-5" />
-            Add part
-          </Link>
-        </div>
-      </div>
-      {/* Phones have no sidebar, so the lab shows here */}
-      <div className="mt-1 flex items-center justify-between gap-3 lg:hidden">
-        {lab ? (
-          <Link href="/lab" className="flex min-w-0 text-[15px] font-semibold text-muted">
-            <LabBadge name={lab.name} logo={lab.logo?.thumb ?? null} />
-          </Link>
-        ) : (
-          <span />
-        )}
+      {/* Phones: the lab is the title, with add and account as round buttons */}
+      <div className="mb-4 flex items-center gap-3 lg:hidden">
+        <Link href="/lab" className="flex min-w-0 flex-1 text-[24px] font-semibold tracking-tight">
+          {lab ? <LabBadge name={lab.name} logo={lab.logo?.thumb ?? null} size="md" /> : 'LabStash'}
+        </Link>
+        <Link
+          href="/parts/new"
+          aria-label="Add part"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-mask text-mask-ink"
+        >
+          <Icon name="plus" className="size-6" />
+        </Link>
         <Link
           href="/profile"
           aria-label="Account"
-          className="grid size-9 shrink-0 place-items-center rounded-full border border-line text-muted"
+          className="grid size-11 shrink-0 place-items-center rounded-full border border-line bg-raised text-[17px] font-semibold"
         >
-          <Icon name="user" className="size-5" />
+          {(user.name || user.email).charAt(0).toUpperCase()}
         </Link>
       </div>
-      <div className="mb-4 lg:mb-6" />
+      {/* Desktop: the sidebar carries the lab and account */}
+      <div className="mb-6 hidden items-center justify-between gap-3 lg:flex">
+        <h1 className="text-[34px] font-semibold tracking-tight">Your stash</h1>
+        <Link
+          href="/parts/new"
+          className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-4 font-semibold whitespace-nowrap text-mask-ink"
+        >
+          <Icon name="plus" className="size-5" />
+          Add part
+        </Link>
+      </div>
       <SearchBar />
 
-      <div className="mt-4 grid grid-cols-3 gap-2 lg:gap-4">
+      <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-4">
+        <Stat
+          href="/parts"
+          n={stats.parts}
+          label={stats.parts === 1 ? 'part' : 'parts'}
+          tone="quiet"
+        />
         <Stat
           href="/inbox"
           n={stats.inbox}
