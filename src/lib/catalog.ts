@@ -243,10 +243,12 @@ export const readMediaFile = async (
       return { data: Buffer.from(await res.arrayBuffer()), mimeType, filename }
     }
   }
-  const dir = path.resolve(config.upload.staticDir || 'media')
+  // Local development only (production files come from the storage adapter above); the
+  // comments keep the bundler from shipping the whole project to read one folder
+  const dir = path.resolve(/* turbopackIgnore: true */ config.upload.staticDir || 'media')
   const file = path.resolve(dir, filename)
   if (!file.startsWith(dir + path.sep)) throw new Error('File not found')
-  return { data: await fs.readFile(file), mimeType, filename }
+  return { data: await fs.readFile(/* turbopackIgnore: true */ file), mimeType, filename }
 }
 
 /** Shares or stops sharing the given parts of the user's own lab; returns how many changed. */
