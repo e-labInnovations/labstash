@@ -137,8 +137,13 @@ function Stat({
   return (
     <Link
       href={href}
-      className={`rounded-2xl px-3 py-3 ${tone === 'enig' ? 'bg-enig-soft' : 'border border-line bg-raised'}`}
+      className={`relative rounded-2xl px-3 py-3 ${tone === 'enig' ? 'bg-enig-soft' : 'border border-line bg-raised'}`}
     >
+      {/* Every tile opens its list */}
+      <Icon
+        name="back"
+        className={`absolute top-3 right-3 size-4 rotate-180 ${tone === 'enig' ? 'text-enig' : 'text-muted'}`}
+      />
       <span
         className={`block text-[28px] leading-none font-semibold ${tone === 'enig' ? 'text-enig' : ''}`}
       >
