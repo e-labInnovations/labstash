@@ -10,22 +10,28 @@ import { Icon } from './Icon'
 const inBox = (label: Label, box: string) =>
   label.where.split(', ').some((c) => c === box || c.startsWith(`${box}-`))
 
-/** Pick parts (by search or a whole box at a time) and open them as an A4 label sheet. */
+const NOUN = { ids: ['part', 'parts'], boxes: ['box', 'boxes'] } as const
+
+/** Pick parts or boxes (by search or a whole box at a time) and open them as an A4 label sheet. */
 export function LabelPicker({
   labels,
   boxes,
   initialBox,
+  param = 'ids',
 }: {
   labels: Label[]
   boxes: string[]
   initialBox?: string
+  /** Which sheet parameter the picked ids go in: part ids, or box codes */
+  param?: keyof typeof NOUN
 }) {
+  const [one, many] = NOUN[param]
   const [query, setQuery] = useState('')
   const [box, setBox] = useState<string | null>(initialBox ?? null)
   const [picked, setPicked] = useState<string[]>(() =>
     initialBox ? labels.filter((l) => inBox(l, initialBox)).map((l) => l.id) : [],
   )
-  const [size, setSize] = useState<LabelSize>('s')
+  const [size, setSize] = useState<LabelSize>(param === 'boxes' ? 'm' : 's')
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -47,15 +53,17 @@ export function LabelPicker({
         : [...prev, ...shown.map((l) => l.id).filter((id) => !prev.includes(id))],
     )
 
-  const sheet = `/print/labels?size=${size}&ids=${picked.join(',')}`
+  const sheet = `/print/labels?size=${size}&${param}=${picked.map(encodeURIComponent).join(',')}`
 
   return (
     <div className="pb-24 lg:pb-0">
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Filter by name, value, package or box"
-        aria-label="Filter parts"
+        placeholder={
+          param === 'boxes' ? 'Filter by code or name' : 'Filter by name, value, package or box'
+        }
+        aria-label={`Filter ${many}`}
         autoComplete="off"
         className="h-12 w-full rounded-xl border border-line bg-raised px-4"
       />
@@ -79,7 +87,7 @@ export function LabelPicker({
 
       <div className="mt-4 mb-1 flex items-center justify-between">
         <span className="text-[15px] text-muted">
-          {shown.length} {shown.length === 1 ? 'part' : 'parts'}
+          {shown.length} {shown.length === 1 ? one : many}
         </span>
         {shown.length > 0 && (
           <button type="button" onClick={toggleShown} className="font-semibold text-mask">
@@ -107,12 +115,22 @@ export function LabelPicker({
                 >
                   {on && <Icon name="check" className="size-4" />}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 font-medium">{l.name}</span>
-                  <span className="block text-[15px] text-muted">
-                    {[l.detail, l.where || 'not in a box'].filter(Boolean).join(' · ')}
+                {l.kind === 'box' ? (
+                  <span className="min-w-0 flex-1">
+                    <span className="line-clamp-2 font-medium">
+                      <b>{l.where}</b>
+                      {l.name && ` · ${l.name}`}
+                    </span>
+                    {l.detail && <span className="block text-[15px] text-muted">{l.detail}</span>}
                   </span>
-                </span>
+                ) : (
+                  <span className="min-w-0 flex-1">
+                    <span className="line-clamp-2 font-medium">{l.name}</span>
+                    <span className="block text-[15px] text-muted">
+                      {[l.detail, l.where || 'not in a box'].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                )}
               </label>
             </li>
           )
@@ -144,7 +162,7 @@ export function LabelPicker({
             </Link>
           ) : (
             <span className="flex h-13 flex-1 items-center justify-center rounded-2xl border border-dashed border-line text-muted">
-              Pick parts to print
+              Pick {many} to print
             </span>
           )}
         </div>

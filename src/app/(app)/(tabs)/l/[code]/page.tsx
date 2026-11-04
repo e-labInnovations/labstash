@@ -58,7 +58,14 @@ export default async function LocationPage({ params }: { params: Promise<{ code:
             className="flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[15px] font-semibold"
           >
             <Icon name="print" className="size-5" />
-            Print labels
+            Part labels
+          </Link>
+          <Link
+            href={`/labels?for=boxes&box=${encodeURIComponent(trail[0]?.label ?? location.code)}`}
+            className="flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[15px] font-semibold"
+          >
+            <Icon name="print" className="size-5" />
+            Box labels
           </Link>
           <AddPhoto
             location={location.id}

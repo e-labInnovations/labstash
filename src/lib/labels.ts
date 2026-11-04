@@ -1,7 +1,8 @@
 import type { Payload } from 'payload'
 
 import { INBOX_CODE } from '@/collections/Locations'
-import type { Part, User } from '@/payload-types'
+import { idOf } from '@/ledger/rules'
+import type { Location, Part, User } from '@/payload-types'
 
 import { formatValue } from './format'
 import { type StockChip, withLocations } from './search'
@@ -29,14 +30,24 @@ export const toPages = <T>(items: T[], size: LabelSize, offset = 0) => {
   return pages
 }
 
-export type Label = { id: string; name: string; detail: string; where: string }
+export type Label = {
+  kind: 'part' | 'box'
+  id: string
+  /** Where scanning the label's QR code goes, relative to the app */
+  href: string
+  name: string
+  detail: string
+  where: string
+}
 
 /** What a part's label says: its name, value · package, and the boxes it lives in. */
 export const labelFor = (
   part: Pick<Part, 'id' | 'name' | 'value' | 'unit' | 'package'>,
   stock: StockChip[],
 ): Label => ({
+  kind: 'part',
   id: part.id,
+  href: `/parts/${part.id}`,
   name: part.name,
   detail: [formatValue(part.value, part.unit), part.package].filter(Boolean).join(' · '),
   where: stock
@@ -70,4 +81,52 @@ export const labelsFor = async (payload: Payload, user: User, ids?: string[]) =>
   if (!ids) return labels.sort((a, b) => byWhere(a, b) || a.name.localeCompare(b.name))
   const byId = new Map(labels.map((l) => [l.id, l]))
   return ids.map((id) => byId.get(id)).filter((l) => l !== undefined)
+}
+
+type BoxRow = Pick<Location, 'code' | 'name' | 'kind'> & { parent?: string | null }
+
+/** What a box's label says: its code (big), its name, and what it is. */
+export const boxLabelFor = (box: BoxRow, children: number): Label => ({
+  kind: 'box',
+  id: box.code,
+  href: `/l/${encodeURIComponent(box.code)}`,
+  name: box.name ?? '',
+  detail:
+    box.kind === 'box'
+      ? children > 0
+        ? `Box · ${children} ${children === 1 ? 'compartment' : 'compartments'}`
+        : 'Box'
+      : box.parent
+        ? `In ${box.parent}`
+        : '',
+  where: box.code,
+})
+
+/** Labels for every box and compartment (not INBOX), or for the given codes in the order given. */
+export const boxLabelsFor = async (payload: Payload, user: User, codes?: string[]) => {
+  if (codes && codes.length === 0) return []
+  const { docs } = await payload.find({
+    collection: 'locations',
+    where: { code: { not_equals: INBOX_CODE } },
+    pagination: false,
+    depth: 0,
+    select: { code: true, name: true, kind: true, parent: true },
+    user,
+    overrideAccess: false,
+  })
+  const codeOf = new Map(docs.map((l) => [l.id, l.code]))
+  const children = new Map<string, number>()
+  for (const l of docs) {
+    const parent = idOf(l.parent)
+    if (parent) children.set(parent, (children.get(parent) ?? 0) + 1)
+  }
+  const labels = docs.map((l) =>
+    boxLabelFor(
+      { ...l, parent: codeOf.get(idOf(l.parent) ?? '') ?? null },
+      children.get(l.id) ?? 0,
+    ),
+  )
+  if (!codes) return labels.sort(byWhere)
+  const byCode = new Map(labels.map((l) => [l.id, l]))
+  return codes.map((c) => byCode.get(c)).filter((l) => l !== undefined)
 }

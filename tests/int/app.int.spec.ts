@@ -10,7 +10,7 @@ import { receiveLines } from '@/importers/receiveOrder'
 import { findInbox, locationContents } from '@/lib/queries'
 import { photosFor, searchParts } from '@/lib/search'
 import { compartmentCodes, createBox } from '@/lib/boxes'
-import { labelsFor } from '@/lib/labels'
+import { boxLabelsFor, labelsFor } from '@/lib/labels'
 import { createPart, updatePart } from '@/lib/parts'
 import { putAwayAll } from '@/lib/putAway'
 import type { User } from '@/payload-types'
@@ -319,6 +319,21 @@ describe('app flows as a user', () => {
     await expect(putAwayAll(payload, user, [a.id], to)).rejects.toThrow(/no longer/)
     const inbox = (await findInbox(payload, user))!
     await expect(putAwayAll(payload, user, [a.id], inbox.id)).rejects.toThrow(/other than INBOX/)
+  })
+
+  it('labels boxes and compartments: code, name, what it is, scan opens the box', async () => {
+    await createBox(payload, user, { code: 'B12', name: 'Diodes', columns: 2, compartments: 3 })
+    const all = await boxLabelsFor(payload, user)
+    expect(all.some((l) => l.id === 'INBOX')).toBe(false)
+    const b12 = all.filter((l) => l.where.startsWith('B12'))
+    expect(b12.map((l) => [l.where, l.name, l.detail, l.href])).toEqual([
+      ['B12', 'Diodes', 'Box · 3 compartments', '/l/B12'],
+      ['B12-01', '', 'In B12', '/l/B12-01'],
+      ['B12-02', '', 'In B12', '/l/B12-02'],
+      ['B12-03', '', 'In B12', '/l/B12-03'],
+    ])
+    const picked = await boxLabelsFor(payload, user, ['B12-03', 'B12', 'NOPE'])
+    expect(picked.map((l) => l.id)).toEqual(['B12-03', 'B12'])
   })
 
   it('a user cannot write stock rows directly', async () => {

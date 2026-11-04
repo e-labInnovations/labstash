@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { labelFor, labelSize, toPages } from '@/lib/labels'
+import { boxLabelFor, labelFor, labelSize, toPages } from '@/lib/labels'
 
 describe('label sheet', () => {
   it('falls back to medium for unknown sizes', () => {
@@ -29,11 +29,28 @@ describe('label sheet', () => {
       ],
     )
     expect(label).toEqual({
+      kind: 'part',
       id: 'p1',
+      href: '/parts/p1',
       name: '10K OHM 0603',
       detail: '10 kΩ · 0603',
       where: 'B01-06, B02',
     })
     expect(labelFor({ id: 'p2', name: 'Kapton tape' }, []).detail).toBe('')
+  })
+
+  it('gives a box its code, name and what it holds, and opens the box when scanned', () => {
+    expect(boxLabelFor({ code: 'B01', name: 'Resistors', kind: 'box' }, 24)).toEqual({
+      kind: 'box',
+      id: 'B01',
+      href: '/l/B01',
+      name: 'Resistors',
+      detail: 'Box · 24 compartments',
+      where: 'B01',
+    })
+    expect(boxLabelFor({ code: 'B02', name: null, kind: 'box' }, 0).detail).toBe('Box')
+    const cell = boxLabelFor({ code: 'B01-06', kind: 'compartment', parent: 'B01' }, 0)
+    expect([cell.name, cell.detail]).toEqual(['', 'In B01'])
+    expect(boxLabelFor({ code: 'SHELF 2', kind: 'other' }, 0).href).toBe('/l/SHELF%202')
   })
 })

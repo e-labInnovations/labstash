@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import React from 'react'
 
 import { PrintButton } from '@/components/PrintButton'
-import { LABEL_SIZES, type Label, labelSize, labelsFor, toPages } from '@/lib/labels'
+import { LABEL_SIZES, type Label, boxLabelsFor, labelSize, labelsFor, toPages } from '@/lib/labels'
 import { requireSession } from '@/lib/session'
 
 export const metadata = { title: 'Label sheet' }
@@ -13,22 +13,28 @@ const MAX_LABELS = 400
 
 // Type and QR sizes per label size, in print units so the sheet is the same on any screen
 const STYLE = {
-  s: { qr: 17, name: 6.5, nameLines: 3, detail: 7, where: 9 },
-  m: { qr: 22, name: 8, nameLines: 3, detail: 8.5, where: 11 },
-  l: { qr: 32, name: 11, nameLines: 3, detail: 12, where: 16 },
+  s: { qr: 17, name: 6.5, nameLines: 3, detail: 7, where: 9, code: 16 },
+  m: { qr: 22, name: 8, nameLines: 3, detail: 8.5, where: 11, code: 22 },
+  l: { qr: 32, name: 11, nameLines: 3, detail: 12, where: 16, code: 36 },
 } as const
 
 export default async function LabelSheetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ids?: string; size?: string; skip?: string }>
+  searchParams: Promise<{ ids?: string; boxes?: string; size?: string; skip?: string }>
 }) {
   const params = await searchParams
   const size = labelSize(params.size)
-  const ids = (params.ids ?? '').split(',').filter(Boolean).slice(0, MAX_LABELS)
+  const list = (v?: string) => (v ?? '').split(',').filter(Boolean).slice(0, MAX_LABELS)
+  const ids = list(params.ids)
+  const boxes = list(params.boxes)
   const skip = Number(params.skip) || 0
   const { payload, user } = await requireSession()
-  const labels = await labelsFor(payload, user, ids)
+  const labels = (
+    await Promise.all([labelsFor(payload, user, ids), boxLabelsFor(payload, user, boxes)])
+  )
+    .flat()
+    .slice(0, MAX_LABELS)
 
   // Labels point at this deployment, so a scan opens the part in the app
   const h = await headers()
@@ -38,8 +44,8 @@ export default async function LabelSheetPage({
       labels.map(
         async (l) =>
           [
-            l.id,
-            await QRCode.toString(`${origin}/parts/${l.id}`, {
+            l.href,
+            await QRCode.toString(`${origin}${l.href}`, {
               type: 'svg',
               margin: 0,
               errorCorrectionLevel: 'M',
@@ -49,13 +55,15 @@ export default async function LabelSheetPage({
     ),
   )
 
+  const onlyBoxes = ids.length === 0 && boxes.length > 0
   const { cols, rows } = LABEL_SIZES[size]
   const pages = toPages(labels, size, skip)
   const link = (next: Partial<{ size: string; skip: number }>) =>
     `/print/labels?${new URLSearchParams({
       size: next.size ?? size,
       skip: String(next.skip ?? skip),
-      ids: ids.join(','),
+      ...(ids.length > 0 && { ids: ids.join(',') }),
+      ...(boxes.length > 0 && { boxes: boxes.join(',') }),
     })}`
 
   return (
@@ -67,8 +75,11 @@ export default async function LabelSheetPage({
 
       <div className="sticky top-0 z-10 border-b border-line bg-raised/95 px-4 py-3 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-[210mm] flex-wrap items-center gap-x-4 gap-y-2">
-          <Link href="/labels" className="font-semibold text-mask">
-            ← Pick parts
+          <Link
+            href={onlyBoxes ? '/labels?for=boxes' : '/labels'}
+            className="font-semibold text-mask"
+          >
+            ← Pick {onlyBoxes ? 'boxes' : 'parts'}
           </Link>
           <span className="text-muted">
             {labels.length} {labels.length === 1 ? 'label' : 'labels'} on {pages.length} A4{' '}
@@ -118,7 +129,7 @@ export default async function LabelSheetPage({
 
       {labels.length === 0 ? (
         <p className="p-8 text-center text-muted print:hidden">
-          No parts picked. <Link href="/labels">Pick some</Link>.
+          Nothing picked. <Link href="/labels">Pick some</Link>.
         </p>
       ) : (
         <div className="overflow-x-auto py-6 print:overflow-visible print:p-0">
@@ -141,7 +152,7 @@ export default async function LabelSheetPage({
             >
               {cells.map((label, i) =>
                 label ? (
-                  <LabelCell key={i} label={label} svg={qr.get(label.id) ?? ''} size={size} />
+                  <LabelCell key={i} label={label} svg={qr.get(label.href) ?? ''} size={size} />
                 ) : (
                   <div key={i} style={{ border: '0.2mm dashed #ccc' }} />
                 ),
@@ -184,6 +195,21 @@ function LabelCell({ label, svg, size }: { label: Label; svg: string; size: keyo
         }}
       >
         <div>
+          {label.kind === 'box' && (
+            <div
+              style={{
+                fontSize: `${s.code}pt`,
+                fontWeight: 700,
+                lineHeight: 1,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                marginBottom: '1mm',
+              }}
+            >
+              {label.where}
+            </div>
+          )}
           <div
             style={{
               fontSize: `${s.name}pt`,
@@ -203,7 +229,7 @@ function LabelCell({ label, svg, size }: { label: Label; svg: string; size: keyo
             </div>
           )}
         </div>
-        {label.where && (
+        {label.kind === 'part' && label.where && (
           <div
             style={{
               fontSize: `${s.where}pt`,
