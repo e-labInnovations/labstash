@@ -23,6 +23,24 @@ const calls: string[] = []
 const fakeFetch = async (input: string | URL | Request, init?: RequestInit) => {
   const url = String(input instanceof Request ? input.url : input)
   calls.push(url)
+  if (url.includes('robu-prod-media.s3')) {
+    return new Response(new Uint8Array(png), { headers: { 'content-type': 'image/webp' } })
+  }
+  if (url.includes('backend.robu.in') && String(init?.body).includes('productdetails')) {
+    // Public product details: no token needed
+    return Response.json({
+      data: {
+        productdetails: {
+          status: true,
+          data: {
+            images: [
+              { url: 'https://robu-prod-media.s3.ap-south-1.amazonaws.com/product/1/pcb.webp' },
+            ],
+          },
+        },
+      },
+    })
+  }
   if (url.includes('backend.robu.in')) {
     if (new Headers(init?.headers).get('Authorization') !== `Bearer ${ROBU_KEY}`) {
       return Response.json({ errors: [{ message: 'Unauthenticated.' }] })
@@ -263,7 +281,7 @@ describe('ETstore import', () => {
     expect(preview.warnings).toEqual([expect.stringContaining('cancelled')])
 
     const [result] = await importOrders(payload, alice, 'robu', ROBU_KEY, ['3790001'])
-    expect(result).toMatchObject({ status: 'imported', partsCreated: 1, photos: 0 })
+    expect(result).toMatchObject({ status: 'imported', partsCreated: 1, photos: 1 })
     const purchase = await payload.findByID({
       collection: 'purchases',
       id: result.purchaseId,

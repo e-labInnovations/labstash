@@ -139,3 +139,38 @@ export const fetchRobuOrder = async (key: string, id: string): Promise<ParsedOrd
     warnings,
   }
 }
+
+/** The first product photo on robu.in, from the public product details its pages load. */
+const productPhoto = async (slug: string) => {
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      operationName: 'ProductDetails',
+      query: `query ProductDetails($slug: String!) {
+        productdetails(slug: $slug) { status data { images { url } } } }`,
+      variables: { slug },
+    }),
+    cache: 'no-store',
+  })
+  if (!res.ok) return null
+  const body = (await res.json()) as {
+    data?: { productdetails: { data: { images: Array<{ url: string }> | null } | null } | null }
+  }
+  return body.data?.productdetails?.data?.images?.[0]?.url ?? null
+}
+
+/** Product photo per Robu SKU for an order's items, best effort: never blocks an import. */
+export const robuPhotos = async (key: string, id: string): Promise<Map<string, string>> => {
+  const photos = new Map<string, string>()
+  try {
+    const order = await fetchRaw(key, id)
+    for (const item of order.items) {
+      const url = item.slug ? await productPhoto(item.slug).catch(() => null) : null
+      if (url) photos.set(item.sku, url)
+    }
+  } catch {
+    // No photos is fine
+  }
+  return photos
+}

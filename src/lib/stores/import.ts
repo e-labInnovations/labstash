@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import sharp from 'sharp'
 
 import { labsOf } from '@/access'
 import { type ParsedOrder, STORE_URL, parseEtstoreOrder } from '@/importers/etstore'
@@ -12,7 +13,7 @@ import {
   fetchEtstoreOrder,
   listEtstoreOrders,
 } from './etstore'
-import { ROBU_URL, fetchRobuOrder } from './robu'
+import { ROBU_URL, fetchRobuOrder, robuPhotos } from './robu'
 
 // Importing a store's orders into the user's lab. The store key is used for the calls and
 // dropped; nothing about the store account is stored.
@@ -33,6 +34,7 @@ const STORES: Record<
   robu: {
     supplier: { name: 'Robu', website: ROBU_URL, importer: 'robu' },
     order: fetchRobuOrder,
+    photos: robuPhotos,
   },
 }
 export type Store = keyof typeof STORES
@@ -168,6 +170,9 @@ export const importOrders = async (
   return results
 }
 
+/** Where store product photos may be fetched from (never an arbitrary address). */
+const PHOTO_HOSTS = ['cdn.shopify.com', 'robu-prod-media.s3.ap-south-1.amazonaws.com']
+
 /** Store photos for the order's parts that have none yet; skips any that fail. */
 const addPhotos = async (
   payload: Payload,
@@ -201,17 +206,26 @@ const addPhotos = async (
     if (totalDocs > 0) continue
     try {
       const src = new URL(url)
-      if (!src.hostname.endsWith('cdn.shopify.com')) continue
-      src.searchParams.set('width', '1000')
+      if (src.protocol !== 'https:' || !PHOTO_HOSTS.some((h) => src.hostname.endsWith(h))) continue
+      // Shopify's CDN resizes on request; other stores' photos are shrunk here
+      if (src.hostname.endsWith('cdn.shopify.com')) src.searchParams.set('width', '1000')
       const res = await fetch(src, { cache: 'no-store' })
       const type = res.headers.get('content-type') ?? ''
       if (!res.ok || !type.startsWith('image/')) continue
-      const data = Buffer.from(await res.arrayBuffer())
-      const ext = type.split('/')[1]?.split(';')[0] ?? 'jpg'
+      const data = await sharp(Buffer.from(await res.arrayBuffer()))
+        .rotate()
+        .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toBuffer()
       await payload.create({
         collection: 'media',
         data: { alt: line.title, kind: 'image', part },
-        file: { data, mimetype: type, name: `${sku!.toLowerCase()}.${ext}`, size: data.length },
+        file: {
+          data,
+          mimetype: 'image/jpeg',
+          name: `${sku!.toLowerCase()}.jpg`,
+          size: data.length,
+        },
         user,
         overrideAccess: false,
       })
