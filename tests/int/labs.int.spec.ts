@@ -176,8 +176,19 @@ describe('separate labs', () => {
     expect(updated.labs?.map((l) => (typeof l.lab === 'object' ? l.lab.id : l.lab))).toEqual([labA])
     expect(isAdmin(alice)).toBe(false)
 
+    // Shared categories: anyone may add one, only the admin may change it
+    const theirs = await payload.create({
+      collection: 'categories',
+      data: { name: 'Mine' },
+      ...as(alice),
+    })
     await expect(
-      payload.create({ collection: 'categories', data: { name: 'Mine' }, ...as(alice) }),
+      payload.update({
+        collection: 'categories',
+        id: theirs.id,
+        data: { name: 'x' },
+        ...as(alice),
+      }),
     ).rejects.toThrow()
     await expect(payload.find({ collection: 'categories', ...as(alice) })).resolves.toBeDefined()
     // A user passed without the `users` marker is still kept to their own lab

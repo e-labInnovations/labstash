@@ -41,14 +41,22 @@ export default async function HomePage() {
         </div>
       </div>
       {/* Phones have no sidebar, so the lab shows here */}
-      {lab && (
+      <div className="mt-1 flex items-center justify-between gap-3 lg:hidden">
+        {lab ? (
+          <Link href="/lab" className="flex min-w-0 text-[15px] font-semibold text-muted">
+            <LabBadge name={lab.name} logo={lab.logo?.thumb ?? null} />
+          </Link>
+        ) : (
+          <span />
+        )}
         <Link
-          href="/lab"
-          className="mt-1 flex min-w-0 text-[15px] font-semibold text-muted lg:hidden"
+          href="/profile"
+          aria-label="Account"
+          className="grid size-9 shrink-0 place-items-center rounded-full border border-line text-muted"
         >
-          <LabBadge name={lab.name} logo={lab.logo?.thumb ?? null} />
+          <Icon name="user" className="size-5" />
         </Link>
-      )}
+      </div>
       <div className="mb-4 lg:mb-6" />
       <SearchBar />
 

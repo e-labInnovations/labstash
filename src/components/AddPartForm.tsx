@@ -108,6 +108,9 @@ export function AddPartForm({
           ))}
         </select>
       </Field>
+      <a href="/categories" target="_blank" className="-mt-3 text-[15px] font-semibold text-mask">
+        Missing one? Manage categories
+      </a>
 
       <QtyStepper name="quantity" initial={1} label="How many you have" />
 

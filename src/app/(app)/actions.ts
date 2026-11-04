@@ -4,7 +4,9 @@ import { revalidatePath } from 'next/cache'
 
 import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
 import { addFile, addLink, fileKind, removeFile, removeLink } from '@/lib/attachments'
+import { changePassword, updateProfile } from '@/lib/account'
 import { createBox } from '@/lib/boxes'
+import { addCategory, deleteCategory, updateCategory } from '@/lib/categories'
 import { attempt } from '@/lib/result'
 import { importOrders, isStore, listOrders, previewOrders } from '@/lib/stores/import'
 import { updateLab } from '@/lib/labSettings'
@@ -331,4 +333,57 @@ export async function storeImport(store: string, key: string, ids: string[]) {
   })
   if (result.ok) revalidatePath('/', 'layout')
   return result
+}
+
+export async function saveProfile(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  try {
+    await updateProfile(payload, user, { name: str(form.get('name')) ?? '' })
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'Saved' }
+}
+
+export async function savePassword(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  try {
+    await changePassword(payload, user, {
+      current: String(form.get('current') ?? ''),
+      next: String(form.get('next') ?? ''),
+      confirm: String(form.get('confirm') ?? ''),
+    })
+  } catch (e) {
+    return { error: message(e) }
+  }
+  return { ok: 'Password changed' }
+}
+
+/** New category (anyone), or rename / move one (admin). */
+export async function saveCategory(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const id = str(form.get('id'))
+  const input = { name: str(form.get('name')) ?? '', parent: str(form.get('parent')) ?? null }
+  try {
+    if (id) await updateCategory(payload, user, id, input)
+    else await addCategory(payload, user, input)
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: id ? 'Category saved' : 'Category added' }
+}
+
+export async function removeCategory(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const id = str(form.get('id'))
+  if (!id) return { error: 'Category not found' }
+  try {
+    await deleteCategory(payload, user, id)
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'Category deleted' }
 }

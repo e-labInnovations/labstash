@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { adminOnly, authenticated } from '../access'
+import { adminRoleOnly, authenticated } from '../access'
 
 // parent + breadcrumbs fields are added by plugin-nested-docs
 export const Categories: CollectionConfig = {
@@ -12,10 +12,10 @@ export const Categories: CollectionConfig = {
   },
   access: {
     read: authenticated,
-    // Shared by every lab, so only the admin edits (importers add new ones as a system job)
-    create: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
+    // Shared by every lab: anyone may add one, only the admin renames, moves or deletes
+    create: authenticated,
+    update: adminRoleOnly,
+    delete: adminRoleOnly,
   },
   fields: [
     {

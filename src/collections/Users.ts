@@ -39,6 +39,11 @@ export const Users: CollectionConfig = {
   fields: [
     // Email added by default; `labs` (the labs this user works in) added by the multi-tenant plugin
     {
+      name: 'name',
+      type: 'text',
+      admin: { description: 'Shown in the app instead of the email' },
+    },
+    {
       name: 'role',
       type: 'select',
       required: true,

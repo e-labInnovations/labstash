@@ -13,7 +13,7 @@ const tabs: Array<{ href: string; label: string; icon: IconName; match: RegExp }
     href: '/',
     label: 'Home',
     icon: 'home',
-    match: /^\/($|search|parts|low-stock|catalog|lab(\/|$))/,
+    match: /^\/($|search|parts|low-stock|catalog|lab(\/|$)|profile|categories)/,
   },
   { href: '/locations', label: 'Boxes', icon: 'box', match: /^\/(locations|l\/|labels|share)/ },
   { href: '/scan', label: 'Scan', icon: 'scan', match: /^\/scan/ },
@@ -86,11 +86,14 @@ export function Sidebar({
   search,
   lab,
   isAdmin,
+  account,
 }: {
   inboxCount: number
   search: React.ReactNode
   lab: { name: string; logo: string | null } | null
   isAdmin: boolean
+  /** Name or email, linking to the account page */
+  account?: string
 }) {
   const pathname = usePathname()
   return (
@@ -144,10 +147,20 @@ export function Sidebar({
           })}
         </ul>
       </nav>
+      {account && (
+        <Link
+          href="/profile"
+          aria-current={pathname === '/profile' ? 'page' : undefined}
+          className="mt-auto flex h-11 items-center gap-3 rounded-xl px-3 font-medium text-muted hover:bg-surface hover:text-ink aria-[current=page]:bg-mask-soft aria-[current=page]:text-mask"
+        >
+          <Icon name="user" className="size-5" />
+          <span className="min-w-0 flex-1 truncate">{account}</span>
+        </Link>
+      )}
       {isAdmin && (
         <Link
           href="/admin"
-          className="mt-auto flex h-11 items-center rounded-xl px-3 text-[15px] text-muted hover:bg-surface hover:text-ink"
+          className="flex h-11 items-center rounded-xl px-3 text-[15px] text-muted hover:bg-surface hover:text-ink"
         >
           Admin panel
         </Link>

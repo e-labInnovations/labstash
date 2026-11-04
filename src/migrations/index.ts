@@ -4,6 +4,7 @@ import * as migration_20261103_052015_part_images from './20261103_052015_part_i
 import * as migration_20261104_053348_labs from './20261104_053348_labs'
 import * as migration_20261104_064909_shared_parts from './20261104_064909_shared_parts'
 import * as migration_20261104_072744_attachments_themes from './20261104_072744_attachments_themes'
+import * as migration_20261104_125306_user_name from './20261104_125306_user_name'
 
 export const migrations = [
   {
@@ -35,5 +36,10 @@ export const migrations = [
     up: migration_20261104_072744_attachments_themes.up,
     down: migration_20261104_072744_attachments_themes.down,
     name: '20261104_072744_attachments_themes',
+  },
+  {
+    up: migration_20261104_125306_user_name.up,
+    down: migration_20261104_125306_user_name.down,
+    name: '20261104_125306_user_name',
   },
 ]

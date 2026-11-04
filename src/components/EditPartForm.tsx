@@ -100,6 +100,9 @@ export function EditPartForm({
           ))}
         </select>
       </Field>
+      <a href="/categories" target="_blank" className="-mt-3 text-[15px] font-semibold text-mask">
+        Missing one? Manage categories
+      </a>
 
       <Field label="Reorder at">
         <input

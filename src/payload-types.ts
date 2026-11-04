@@ -350,6 +350,10 @@ export interface Folder {
  */
 export interface User {
   id: string;
+  /**
+   * Shown in the app instead of the email
+   */
+  name?: string | null;
   role: 'admin' | 'user';
   labs?:
     | {
@@ -1085,6 +1089,7 @@ export interface TagsSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
   role?: T;
   labs?:
     | T

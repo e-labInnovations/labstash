@@ -33,6 +33,16 @@ export const isAdmin = (user: unknown): boolean => {
 export const adminOnly: Access = ({ req }) => isAdmin(req.user)
 export const adminOnlyField: FieldAccess = ({ req }) => isAdmin(req.user)
 
+/**
+ * The admin, in the admin panel or the app. For lists every lab shares (categories), where
+ * "own lab only" has no meaning; API keys (MCP) still don't count.
+ */
+export const isAdminRole = (user: unknown): boolean => {
+  const u = user as SessionUser | null | undefined
+  return u?.collection === 'users' && u.role === 'admin' && u._strategy !== 'api-key'
+}
+export const adminRoleOnly: Access = ({ req }) => isAdminRole(req.user)
+
 /** Labs whose settings the user may change: all for the admin, else where they are lab admin. */
 export const managedLabs = (user: unknown): string[] | 'all' => {
   const u = user as
