@@ -38,6 +38,8 @@ export type Label = {
   name: string
   detail: string
   where: string
+  /** Box labels only: the code of the box a compartment sits in, null for a main box */
+  inside?: string | null
 }
 
 /** What a part's label says: its name, value · package, and the boxes it lives in. */
@@ -100,6 +102,7 @@ export const boxLabelFor = (box: BoxRow, children: number): Label => ({
         ? `In ${box.parent}`
         : '',
   where: box.code,
+  inside: box.parent ?? null,
 })
 
 /** Labels for every box and compartment (not INBOX), or for the given codes in the order given. */

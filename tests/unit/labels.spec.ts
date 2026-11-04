@@ -47,10 +47,11 @@ describe('label sheet', () => {
       name: 'Resistors',
       detail: 'Box · 24 compartments',
       where: 'B01',
+      inside: null,
     })
     expect(boxLabelFor({ code: 'B02', name: null, kind: 'box' }, 0).detail).toBe('Box')
     const cell = boxLabelFor({ code: 'B01-06', kind: 'compartment', parent: 'B01' }, 0)
-    expect([cell.name, cell.detail]).toEqual(['', 'In B01'])
+    expect([cell.name, cell.detail, cell.inside]).toEqual(['', 'In B01', 'B01'])
     expect(boxLabelFor({ code: 'SHELF 2', kind: 'other' }, 0).href).toBe('/l/SHELF%202')
   })
 })

@@ -332,6 +332,7 @@ describe('app flows as a user', () => {
       ['B12-02', '', 'In B12', '/l/B12-02'],
       ['B12-03', '', 'In B12', '/l/B12-03'],
     ])
+    expect(b12.map((l) => l.inside)).toEqual([null, 'B12', 'B12', 'B12'])
     const picked = await boxLabelsFor(payload, user, ['B12-03', 'B12', 'NOPE'])
     expect(picked.map((l) => l.id)).toEqual(['B12-03', 'B12'])
   })

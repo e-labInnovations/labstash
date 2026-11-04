@@ -12,6 +12,11 @@ const inBox = (label: Label, box: string) =>
 
 const NOUN = { ids: ['part', 'parts'], boxes: ['box', 'boxes'] } as const
 
+const LEVELS = { all: 'All', main: 'Main boxes', inner: 'Compartments' } as const
+type Level = keyof typeof LEVELS
+const atLevel = (label: Label, level: Level) =>
+  level === 'all' || (level === 'main') === !label.inside
+
 /** Pick parts or boxes (by search or a whole box at a time) and open them as an A4 label sheet. */
 export function LabelPicker({
   labels,
@@ -32,15 +37,24 @@ export function LabelPicker({
     initialBox ? labels.filter((l) => inBox(l, initialBox)).map((l) => l.id) : [],
   )
   const [size, setSize] = useState<LabelSize>(param === 'boxes' ? 'm' : 's')
+  const [level, setLevel] = useState<Level>('all')
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
     return labels.filter(
       (l) =>
         (!box || inBox(l, box)) &&
+        atLevel(l, level) &&
         (!q || `${l.name} ${l.detail} ${l.where}`.toLowerCase().includes(q)),
     )
-  }, [labels, box, query])
+  }, [labels, box, level, query])
+
+  // Hidden labels would still print, so switching level unpicks what it hides
+  const pickLevel = (next: Level) => {
+    setLevel(next)
+    const byId = new Map(labels.map((l) => [l.id, l]))
+    setPicked((prev) => prev.filter((id) => atLevel(byId.get(id)!, next)))
+  }
 
   const isPicked = new Set(picked)
   const allShown = shown.length > 0 && shown.every((l) => isPicked.has(l.id))
@@ -67,6 +81,23 @@ export function LabelPicker({
         autoComplete="off"
         className="h-12 w-full rounded-xl border border-line bg-raised px-4"
       />
+      {param === 'boxes' && (
+        <div className="mt-3 flex gap-1 rounded-xl border border-line p-1 lg:max-w-md">
+          {(Object.keys(LEVELS) as Level[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => pickLevel(key)}
+              aria-pressed={level === key}
+              className={`h-10 flex-1 rounded-lg text-[15px] font-semibold ${
+                level === key ? 'bg-mask-soft text-mask' : 'text-muted'
+              }`}
+            >
+              {LEVELS[key]}
+            </button>
+          ))}
+        </div>
+      )}
       {boxes.length > 0 && (
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {[null, ...boxes].map((code) => (
