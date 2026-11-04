@@ -4,8 +4,15 @@ import type { User } from '@/payload-types'
 
 import { type ParsedQuery, parseQuery } from './searchQuery'
 
-/** Conditions on parts for a parsed query; `skuParts` are the parts its store code matched. */
-export const partConditions = (parsed: ParsedQuery, skuParts: string[]): Where[] => {
+/**
+ * Conditions on parts for a parsed query; `skuParts` are the parts its store code matched, and
+ * `boxParts` (optional) the parts kept in boxes whose code contains each word.
+ */
+export const partConditions = (
+  parsed: ParsedQuery,
+  skuParts: string[],
+  boxParts?: Map<string, string[]>,
+): Where[] => {
   const and: Where[] = []
 
   if (parsed.value) {
@@ -24,6 +31,7 @@ export const partConditions = (parsed: ParsedQuery, skuParts: string[]): Where[]
         { mpn: { like: term } },
         { package: { like: term } },
         { description: { like: term } },
+        ...(boxParts?.get(term)?.length ? [{ id: { in: boxParts.get(term) } }] : []),
       ],
     })
   }

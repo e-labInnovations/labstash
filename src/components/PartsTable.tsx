@@ -1,134 +1,78 @@
 'use client'
 
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import React, { useEffect, useMemo, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import React, { useEffect, useRef, useState, useTransition } from 'react'
 
+import {
+  type ListParams,
+  PER_PAGE,
+  type PartList,
+  SHOW,
+  SORT,
+  type Show,
+  type SortKey,
+} from '@/lib/partList'
 import type { CategoryOption } from '@/lib/queries'
-import type { StockChip } from '@/lib/search'
 
 import { Icon } from './Icon'
 import { LocationChip, PartRow, Quantity } from './ui'
 
-export type PartListRow = {
-  part: {
-    id: string
-    name: string
-    value: number | null
-    unit: string | null
-    package: string | null
-    totalQuantity: number
-    lowStock: boolean
+const DEFAULTS: ListParams = { q: '', category: '', show: 'all', sort: 'name', page: 1, limit: 50 }
+
+/** The address for a list view, leaving defaults out so links stay short. */
+const hrefFor = (pathname: string, p: ListParams) => {
+  const qs = new URLSearchParams()
+  for (const key of Object.keys(DEFAULTS) as Array<keyof ListParams>) {
+    if (p[key] !== DEFAULTS[key]) qs.set(key, String(p[key]))
   }
-  mpn: string | null
-  valueText: string
-  category: string | null
-  shared: boolean
-  createdAt: string
-  stock: StockChip[]
-  thumb: string | null
+  const s = qs.toString()
+  return s ? `${pathname}?${s}` : pathname
 }
 
-const SHOW = {
-  all: 'All',
-  low: 'Running low',
-  out: 'Out of stock',
-  inbox: 'In Inbox',
-  shared: 'Shared',
-} as const
-type Show = keyof typeof SHOW
-
-const SORT = {
-  name: 'Name',
-  box: 'Box',
-  most: 'Most stock',
-  least: 'Least stock',
-  value: 'Value',
-  newest: 'Newest',
-} as const
-type Sort = keyof typeof SORT
-
-const numeric = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true })
-const firstBox = (r: PartListRow) => r.stock.find((s) => s.code !== 'INBOX')?.code ?? '￿'
-
-const compare: Record<Sort, (a: PartListRow, b: PartListRow) => number> = {
-  name: (a, b) => numeric(a.part.name, b.part.name),
-  box: (a, b) => numeric(firstBox(a), firstBox(b)) || numeric(a.part.name, b.part.name),
-  most: (a, b) => b.part.totalQuantity - a.part.totalQuantity,
-  least: (a, b) => a.part.totalQuantity - b.part.totalQuantity,
-  // Grouped by unit (Ω, F, V…), then smallest first; parts without a value last
-  value: (a, b) =>
-    (a.part.value == null ? 1 : 0) - (b.part.value == null ? 1 : 0) ||
-    (a.part.unit ?? '').localeCompare(b.part.unit ?? '') ||
-    (a.part.value ?? 0) - (b.part.value ?? 0),
-  newest: (a, b) => b.createdAt.localeCompare(a.createdAt),
-}
-
-const matches: Record<Show, (r: PartListRow) => boolean> = {
-  all: () => true,
-  low: (r) => r.part.lowStock,
-  out: (r) => r.part.totalQuantity === 0,
-  inbox: (r) => r.stock.some((s) => s.code === 'INBOX'),
-  shared: (r) => r.shared,
-}
-
-const pick = <T extends string>(options: Record<T, string>, v: string | null, fallback: T) =>
-  v && v in options ? (v as T) : fallback
-
-/** Every part in the lab, filtered and sorted in the browser; the filters live in the URL. */
+/**
+ * One page of the lab's parts. Filters, sort and page live in the address; the server does the
+ * filtering and paging, so this only renders what it is given.
+ */
 export function PartsTable({
-  rows,
+  list,
+  params,
   categories,
 }: {
-  rows: PartListRow[]
+  list: PartList
+  params: ListParams
   categories: CategoryOption[]
 }) {
-  // Read from the address bar, not the server render: Back reuses a cached render of /parts
-  const initial = useSearchParams()
-  const [query, setQuery] = useState(initial.get('q') ?? '')
-  const [category, setCategory] = useState(initial.get('category') ?? '')
-  const [show, setShow] = useState<Show>(pick(SHOW, initial.get('show'), 'all'))
-  const [sort, setSort] = useState<Sort>(pick(SORT, initial.get('sort'), 'name'))
+  const router = useRouter()
+  const pathname = usePathname()
+  const [pending, startTransition] = useTransition()
+  const [query, setQuery] = useState(params.q)
 
-  // Coming back from a part keeps the same view
-  useEffect(() => {
-    const params = new URLSearchParams()
-    if (query.trim()) params.set('q', query.trim())
-    if (category) params.set('category', category)
-    if (show !== 'all') params.set('show', show)
-    if (sort !== 'name') params.set('sort', sort)
-    const qs = params.toString()
-    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
-  }, [query, category, show, sort])
+  const go = (next: Partial<ListParams>) => {
+    // Any change other than paging starts again at page 1
+    const merged = { ...params, page: 1, ...next }
+    startTransition(() => router.replace(hrefFor(pathname, merged), { scroll: false }))
+  }
 
-  const shown = useMemo(() => {
-    const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
-    return rows
-      .filter((r) => {
-        if (!matches[show](r) || (category && r.category !== category)) return false
-        const text = [
-          r.part.name,
-          r.mpn,
-          r.valueText,
-          r.part.package,
-          r.category,
-          ...r.stock.map((s) => s.code),
-        ]
-          .join(' ')
-          .toLowerCase()
-        return words.every((w) => text.includes(w))
-      })
-      .sort(compare[sort])
-  }, [rows, query, category, show, sort])
+  // Search as you type, without a request per keystroke
+  const typing = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const type = (text: string) => {
+    setQuery(text)
+    clearTimeout(typing.current)
+    typing.current = setTimeout(() => go({ q: text.trim() }), 300)
+  }
+  useEffect(() => () => clearTimeout(typing.current), [])
 
-  const pcs = shown.reduce((sum, r) => sum + r.part.totalQuantity, 0)
+  const { rows, total, pages, page, pcs } = list
+  const from = total === 0 ? 0 : (page - 1) * params.limit + 1
+  const to = Math.min(total, page * params.limit)
 
   return (
     <div>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => type(e.target.value)}
           placeholder="Filter by name, value, package, box…"
           aria-label="Filter parts"
           autoComplete="off"
@@ -136,25 +80,25 @@ export function PartsTable({
         />
         <div className="grid grid-cols-2 gap-2 lg:flex">
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={params.category}
+            onChange={(e) => go({ category: e.target.value })}
             aria-label="Category"
             className="h-12 min-w-0 rounded-xl border border-line bg-raised px-3 lg:w-56"
           >
             <option value="">All categories</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.label}>
+              <option key={c.id} value={c.id}>
                 {c.label}
               </option>
             ))}
           </select>
           <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
+            value={params.sort}
+            onChange={(e) => go({ sort: e.target.value as SortKey })}
             aria-label="Sort by"
             className="h-12 min-w-0 rounded-xl border border-line bg-raised px-3 lg:w-44"
           >
-            {(Object.keys(SORT) as Sort[]).map((key) => (
+            {(Object.keys(SORT) as SortKey[]).map((key) => (
               <option key={key} value={key}>
                 Sort: {SORT[key]}
               </option>
@@ -168,10 +112,10 @@ export function PartsTable({
           <button
             key={key}
             type="button"
-            onClick={() => setShow(key)}
-            aria-pressed={show === key}
+            onClick={() => go({ show: key })}
+            aria-pressed={params.show === key}
             className={`h-10 shrink-0 rounded-full border px-4 text-[15px] font-semibold ${
-              show === key ? 'border-mask bg-mask-soft text-mask' : 'border-line text-muted'
+              params.show === key ? 'border-mask bg-mask-soft text-mask' : 'border-line text-muted'
             }`}
           >
             {SHOW[key]}
@@ -179,86 +123,153 @@ export function PartsTable({
         ))}
       </div>
 
-      <p className="mt-3 mb-1 text-[15px] text-muted">
-        {shown.length} of {rows.length} {rows.length === 1 ? 'part' : 'parts'} · {pcs} pcs
+      <p className="mt-3 mb-1 text-[15px] text-muted" aria-live="polite">
+        {total === 0
+          ? 'No parts'
+          : `${from}–${to} of ${total} ${total === 1 ? 'part' : 'parts'} · ${pcs} pcs`}
       </p>
 
-      {shown.length === 0 ? (
-        <p className="py-8 text-center text-muted">
-          {rows.length === 0 ? 'No parts yet.' : 'Nothing matches these filters.'}
-        </p>
-      ) : (
-        <>
-          {/* Phones: the same rows as search */}
-          <ul className="lg:hidden">
-            {shown.map((r) => (
-              <PartRow key={r.part.id} part={r.part} stock={r.stock} thumb={r.thumb} />
-            ))}
-          </ul>
+      <div className={pending ? 'opacity-60 transition-opacity' : undefined}>
+        {rows.length === 0 ? (
+          <p className="py-8 text-center text-muted">
+            {params.q || params.category || params.show !== 'all'
+              ? 'Nothing matches these filters.'
+              : 'No parts yet.'}
+          </p>
+        ) : (
+          <>
+            {/* Phones: the same rows as search */}
+            <ul className="lg:hidden">
+              {rows.map((r) => (
+                <PartRow key={r.part.id} part={r.part} stock={r.stock} thumb={r.thumb} />
+              ))}
+            </ul>
 
-          {/* Desktop: a table */}
-          <div className="hidden overflow-hidden rounded-2xl border border-line bg-raised lg:block">
-            <table className="w-full border-collapse text-left">
-              <thead className="sticky top-0 z-10 bg-raised">
-                <tr className="border-b border-line text-[14px] text-muted">
-                  <th className="px-4 py-3 font-semibold">Part</th>
-                  <th className="px-3 py-3 font-semibold">Value</th>
-                  <th className="px-3 py-3 font-semibold">Package</th>
-                  <th className="px-3 py-3 font-semibold">Category</th>
-                  <th className="px-3 py-3 font-semibold">Where</th>
-                  <th className="px-4 py-3 text-right font-semibold">Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map((r) => (
-                  <tr key={r.part.id} className="border-b border-line align-top last:border-0">
-                    <td className="px-4 py-3">
-                      <Link href={`/parts/${r.part.id}`} className="flex items-start gap-3">
-                        {r.thumb ? (
-                          // eslint-disable-next-line @next/next/no-img-element -- served by Payload/Blob, already resized
-                          <img
-                            src={r.thumb}
-                            alt=""
-                            loading="lazy"
-                            className="size-10 shrink-0 rounded-lg border border-line bg-white object-contain"
-                          />
-                        ) : (
-                          <span className="size-10 shrink-0" />
-                        )}
-                        <span className="min-w-0">
-                          <span className="line-clamp-2 font-medium">{r.part.name}</span>
-                          <span className="flex gap-2 text-[14px] text-muted">
-                            {r.mpn && <span>{r.mpn}</span>}
-                            {r.shared && (
-                              <span className="inline-flex items-center gap-1 font-semibold text-mask">
-                                <Icon name="share" className="size-3.5" />
-                                Shared
-                              </span>
-                            )}
-                          </span>
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">{r.valueText}</td>
-                    <td className="px-3 py-3 whitespace-nowrap">{r.part.package}</td>
-                    <td className="px-3 py-3 text-[15px] text-muted">{r.category}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex max-w-56 flex-wrap gap-1.5">
-                        {r.stock.map((chip) => (
-                          <LocationChip key={chip.code} chip={chip} />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Quantity n={r.part.totalQuantity} low={r.part.lowStock} />
-                    </td>
+            {/* Desktop: a table */}
+            <div className="hidden overflow-hidden rounded-2xl border border-line bg-raised lg:block">
+              <table className="w-full border-collapse text-left">
+                <thead className="bg-raised">
+                  <tr className="border-b border-line text-[14px] text-muted">
+                    <th className="px-4 py-3 font-semibold">Part</th>
+                    <th className="px-3 py-3 font-semibold">Value</th>
+                    <th className="px-3 py-3 font-semibold">Package</th>
+                    <th className="px-3 py-3 font-semibold">Category</th>
+                    <th className="px-3 py-3 font-semibold">Where</th>
+                    <th className="px-4 py-3 text-right font-semibold">Qty</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.part.id} className="border-b border-line align-top last:border-0">
+                      <td className="px-4 py-3">
+                        <Link href={`/parts/${r.part.id}`} className="flex items-start gap-3">
+                          {r.thumb ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- served by Payload/Blob, already resized
+                            <img
+                              src={r.thumb}
+                              alt=""
+                              loading="lazy"
+                              className="size-10 shrink-0 rounded-lg border border-line bg-white object-contain"
+                            />
+                          ) : (
+                            <span className="size-10 shrink-0" />
+                          )}
+                          <span className="min-w-0">
+                            <span className="line-clamp-2 font-medium">{r.part.name}</span>
+                            <span className="flex gap-2 text-[14px] text-muted">
+                              {r.mpn && <span>{r.mpn}</span>}
+                              {r.shared && (
+                                <span className="inline-flex items-center gap-1 font-semibold text-mask">
+                                  <Icon name="share" className="size-3.5" />
+                                  Shared
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">{r.valueText}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">{r.part.package}</td>
+                      <td className="px-3 py-3 text-[15px] text-muted">{r.category}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex max-w-56 flex-wrap gap-1.5">
+                          {r.stock.map((chip) => (
+                            <LocationChip key={chip.code} chip={chip} />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Quantity n={r.part.totalQuantity} low={r.part.lowStock} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      <nav
+        aria-label="Pages"
+        className="mt-4 flex flex-wrap items-center justify-between gap-3 pb-4"
+      >
+        <label className="flex items-center gap-2 text-[15px] text-muted">
+          Per page
+          <select
+            value={params.limit}
+            onChange={(e) => go({ limit: Number(e.target.value) })}
+            className="h-10 rounded-xl border border-line bg-raised px-2 font-semibold text-ink"
+          >
+            {PER_PAGE.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        {pages > 1 && (
+          <div className="flex items-center gap-2">
+            <PageLink to={page - 1} disabled={page <= 1} go={go}>
+              <Icon name="back" className="size-5" />
+              <span className="sr-only">Previous page</span>
+            </PageLink>
+            <span className="min-w-20 text-center text-[15px]">
+              Page {page} of {pages}
+            </span>
+            <PageLink to={page + 1} disabled={page >= pages} go={go}>
+              <Icon name="back" className="size-5 rotate-180" />
+              <span className="sr-only">Next page</span>
+            </PageLink>
           </div>
-        </>
-      )}
+        )}
+      </nav>
     </div>
+  )
+}
+
+function PageLink({
+  to,
+  disabled,
+  go,
+  children,
+}: {
+  to: number
+  disabled: boolean
+  go: (next: Partial<ListParams>) => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => {
+        go({ page: to })
+        window.scrollTo({ top: 0 })
+      }}
+      className="grid size-11 place-items-center rounded-xl border border-line disabled:opacity-40"
+    >
+      {children}
+    </button>
   )
 }
