@@ -5,6 +5,7 @@ import React, { useState, useTransition } from 'react'
 
 import { storeImport, storeOrders, storePreview } from '@/app/(app)/actions'
 import type { ImportedOrder, ListedOrder } from '@/lib/stores/import'
+import { robuOrderIds } from '@/lib/stores/robu'
 
 import { FormStatus, inputClass } from './fields'
 import { Icon } from './Icon'
@@ -24,6 +25,7 @@ export function StoreImport() {
   const [key, setKey] = useState('')
   const [orders, setOrders] = useState<ListedOrder[] | null>(null)
   const [picked, setPicked] = useState<string[]>([])
+  const [robuOrders, setRobuOrders] = useState('')
   const [preview, setPreview] = useState<Preview | null>(null)
   const [done, setDone] = useState<ImportedOrder[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -109,11 +111,78 @@ export function StoreImport() {
         </div>
       </fieldset>
 
-      {store === 'robu' && (
-        <p className="rounded-2xl border border-line bg-raised px-4 py-3">
-          Robu import is coming. Robu doesn’t let other apps read your orders, so it will work from
-          the order details you paste from your Robu account.
-        </p>
+      {/* Robu has no order list for customers' apps: orders are named by number or link */}
+      {store === 'robu' && !preview && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            const ids = robuOrderIds(robuOrders)
+            if (ids.length === 0) {
+              setError('Paste an order number or a View order link')
+              return
+            }
+            run(
+              () => storePreview('robu', key, ids),
+              (data) => {
+                setPicked(ids)
+                setPreview(data)
+              },
+            )
+          }}
+          className="flex flex-col gap-3"
+        >
+          <label className="block">
+            <span className="mb-1.5 block text-[15px] text-muted">Robu login token</span>
+            <input
+              type="password"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              required
+              placeholder="eyJ…"
+              autoComplete="off"
+              spellCheck={false}
+              className={`${inputClass} font-mono`}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[15px] text-muted">Order numbers or links</span>
+            <textarea
+              value={robuOrders}
+              onChange={(e) => setRobuOrders(e.target.value)}
+              required
+              rows={3}
+              placeholder={'3792996\nhttps://robu.in/my-account/view-order/3792996/'}
+              className="w-full rounded-xl border border-line bg-surface px-4 py-3 font-mono text-[15px]"
+            />
+          </label>
+          <details className="rounded-2xl border border-line bg-raised px-4 py-3 text-[15px]">
+            <summary className="cursor-pointer font-semibold">Where to find these</summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted">
+              <li>On a computer, sign in at robu.in and open My Account → Orders.</li>
+              <li>
+                Copy the order number, or the link of an order’s <b className="text-ink">View</b>{' '}
+                page. Several can go in, one per line.
+              </li>
+              <li>
+                For the token, open the developer tools (F12) → Application → Cookies → robu.in, and
+                copy <code className="text-ink">userAccessToken</code> (it starts with{' '}
+                <code className="text-ink">eyJ</code>).
+              </li>
+            </ol>
+            <p className="mt-2 text-muted">
+              The token stays signed in for months, so treat it like a password. It’s only used
+              while this page is open; LabStash never saves it. Signing out of robu.in ends it.
+            </p>
+          </details>
+          <FormStatus state={error ? { error } : null} />
+          <button
+            type="submit"
+            disabled={pending || !key.trim() || !robuOrders.trim()}
+            className="flex h-13 items-center justify-center rounded-2xl bg-mask font-semibold text-mask-ink disabled:opacity-60"
+          >
+            {pending ? 'Reading the orders…' : 'Preview'}
+          </button>
+        </form>
       )}
 
       {/* 2. Key */}
@@ -240,7 +309,7 @@ export function StoreImport() {
           <button
             type="button"
             disabled={pending || picked.length === 0}
-            onClick={() => run(() => storePreview(key, picked), setPreview)}
+            onClick={() => run(() => storePreview('etstore', key, picked), setPreview)}
             className="flex h-13 items-center justify-center rounded-2xl bg-mask font-semibold text-mask-ink disabled:opacity-60"
           >
             {pending
@@ -253,7 +322,7 @@ export function StoreImport() {
       )}
 
       {/* 4. Preview */}
-      {store === 'etstore' && preview && (
+      {store && preview && (
         <div className="flex flex-col gap-4">
           {preview.map((o) => {
             const fresh = o.lines.filter((l) => !l.match).length
@@ -262,10 +331,18 @@ export function StoreImport() {
                 <header className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-3">
                   <span className="font-semibold">{o.number}</span>
                   <span className="text-[15px] text-muted">
-                    {o.lines.length} lines · {fresh} new {fresh === 1 ? 'part' : 'parts'} ·{' '}
-                    {inr(o.total)}
+                    {o.imported
+                      ? 'Already in your lab — will be skipped'
+                      : `${o.lines.length} lines · ${fresh} new ${fresh === 1 ? 'part' : 'parts'} · ${inr(o.total)}`}
                   </span>
                 </header>
+                {o.warnings.length > 0 && (
+                  <ul className="border-b border-line bg-enig-soft px-4 py-2 text-[14px]">
+                    {o.warnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                )}
                 <ul>
                   {o.lines.map((l) => (
                     <li
@@ -303,7 +380,7 @@ export function StoreImport() {
             <button
               type="button"
               disabled={pending}
-              onClick={() => run(() => storeImport(key, picked), setDone)}
+              onClick={() => run(() => storeImport(store, key, picked), setDone)}
               className="flex h-13 flex-1 items-center justify-center rounded-2xl bg-mask font-semibold text-mask-ink disabled:opacity-60"
             >
               {pending

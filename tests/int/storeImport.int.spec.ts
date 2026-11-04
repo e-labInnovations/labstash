@@ -3,12 +3,14 @@ import sharp from 'sharp'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { importOrders, listOrders, previewOrders } from '@/lib/stores/import'
+import { robuOrderIds } from '@/lib/stores/robu'
 
 import { freshPayload, newLab, newUser } from './setup'
 
 // ETstore import against a stand-in for Shopify's Customer Account API and image CDN.
 const KEY = 'shcat_eyJ0ZXN0.eyJrZXkiOjF9.c2lnbmVk' // dotted, like real keys
 const ORDER = 'gid://shopify/Order/1001'
+const ROBU_KEY = 'eyJ0eXAiOiJKV1QifQ.eyJzdWIiOiIxIn0.c2lnbmF0dXJl'
 
 const lines = [
   { title: '10K OHM 0603 SMD RESISTOR 1% ET9233', quantity: 100, sku: 'E9233', price: '42.00' },
@@ -21,6 +23,64 @@ const calls: string[] = []
 const fakeFetch = async (input: string | URL | Request, init?: RequestInit) => {
   const url = String(input instanceof Request ? input.url : input)
   calls.push(url)
+  if (url.includes('backend.robu.in')) {
+    if (new Headers(init?.headers).get('Authorization') !== `Bearer ${ROBU_KEY}`) {
+      return Response.json({ errors: [{ message: 'Unauthenticated.' }] })
+    }
+    const { variables } = JSON.parse(String(init?.body)) as { variables: { id: number } }
+    if (variables.id !== 3790001) {
+      return Response.json({
+        data: { getOrder: { status: false, code: 404, message: 'Order not found', data: null } },
+      })
+    }
+    return Response.json({
+      data: {
+        getOrder: {
+          status: true,
+          code: 200,
+          message: 'Order details fetched successfully!',
+          data: [
+            {
+              id: '3790001',
+              incrementId: '3790001',
+              status: 'in_transit',
+              createdAt: '2026-11-02 15:31:16',
+              subTotal: 600,
+              shippingAmount: 49,
+              discountAmount: 0,
+              codCharges: 0,
+              taxAmount: 0,
+              grandTotal: 649,
+              items: [
+                {
+                  id: '1',
+                  name: 'Double Side 20*30cm FR4 Copper Clad PCB',
+                  sku: 'R264392',
+                  slug: 'double-side-fr4-pcb',
+                  qtyOrdered: 2,
+                  qtyCanceled: 0,
+                  qtyRefunded: 0,
+                  price: 289,
+                  total: 578,
+                },
+                {
+                  id: '2',
+                  name: 'Out of stock thing',
+                  sku: 'R1',
+                  slug: 'thing',
+                  qtyOrdered: 1,
+                  qtyCanceled: 1,
+                  qtyRefunded: 0,
+                  price: 22,
+                  total: 22,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+  }
   if (url.includes('cdn.shopify.com')) {
     return new Response(new Uint8Array(png), { headers: { 'content-type': 'image/png' } })
   }
@@ -113,7 +173,7 @@ describe('ETstore import', () => {
     expect(orders).toEqual([
       expect.objectContaining({ id: ORDER, number: '#1001', total: 85, items: 2, imported: false }),
     ])
-    const [preview] = await previewOrders(payload, alice, KEY, [ORDER])
+    const [preview] = await previewOrders(payload, alice, 'etstore', KEY, [ORDER])
     expect(preview.lines.map((l) => [l.sku, l.quantity, l.match])).toEqual([
       ['ET9233', 100, null],
       ['ETA1112', 5, null],
@@ -123,7 +183,7 @@ describe('ETstore import', () => {
   })
 
   it('imports into the user’s own lab with photos, once', async () => {
-    const [result] = await importOrders(payload, alice, KEY, [ORDER])
+    const [result] = await importOrders(payload, alice, 'etstore', KEY, [ORDER])
     expect(result).toMatchObject({
       number: '#1001',
       status: 'imported',
@@ -153,8 +213,8 @@ describe('ETstore import', () => {
 
     // Listed as imported now; importing again changes nothing
     expect((await listOrders(payload, alice, KEY))[0].imported).toBe(true)
-    expect((await importOrders(payload, alice, KEY, [ORDER]))[0].status).toBe('exists')
-    const [again] = await previewOrders(payload, alice, KEY, [ORDER])
+    expect((await importOrders(payload, alice, 'etstore', KEY, [ORDER]))[0].status).toBe('exists')
+    const [again] = await previewOrders(payload, alice, 'etstore', KEY, [ORDER])
     expect(again.lines.every((l) => l.match)).toBe(true)
   })
 
@@ -164,7 +224,7 @@ describe('ETstore import', () => {
     expect(
       (await payload.count({ collection: 'parts', user: bob, overrideAccess: false })).totalDocs,
     ).toBe(0)
-    const [result] = await importOrders(payload, bob, KEY, [ORDER])
+    const [result] = await importOrders(payload, bob, 'etstore', KEY, [ORDER])
     expect(result).toMatchObject({ status: 'imported', partsCreated: 2 })
     expect(
       (await payload.count({ collection: 'parts', user: alice, overrideAccess: false })).totalDocs,
@@ -172,14 +232,63 @@ describe('ETstore import', () => {
   })
 
   it('limits how many orders go at once', async () => {
-    await expect(previewOrders(payload, alice, KEY, [])).rejects.toThrow(/at least one/)
+    await expect(previewOrders(payload, alice, 'etstore', KEY, [])).rejects.toThrow(/at least one/)
     await expect(
       importOrders(
         payload,
         alice,
+        'etstore',
         KEY,
         Array.from({ length: 11 }, (_, i) => `gid://x/${i}`),
       ),
     ).rejects.toThrow(/up to 10/)
+  })
+
+  it('imports Robu orders by number or link, leaving cancelled lines out', async () => {
+    expect(
+      robuOrderIds('https://robu.in/my-account/view-order/3790001/, #3790002\n3790001 abc 12'),
+    ).toEqual(['3790001', '3790002'])
+
+    await expect(previewOrders(payload, alice, 'robu', 'nope', ['3790001'])).rejects.toThrow(/eyJ/)
+    await expect(
+      previewOrders(payload, alice, 'robu', 'eyJa.eyJb.wrong', ['3790001']),
+    ).rejects.toThrow(/didn’t accept/)
+    await expect(previewOrders(payload, alice, 'robu', ROBU_KEY, ['3790002'])).rejects.toThrow(
+      /couldn’t find order 3790002/,
+    )
+
+    const [preview] = await previewOrders(payload, alice, 'robu', `Bearer ${ROBU_KEY}`, ['3790001'])
+    expect(preview).toMatchObject({ number: '#3790001', total: 649, imported: false })
+    expect(preview.lines.map((l) => [l.sku, l.quantity])).toEqual([['R264392', 2]])
+    expect(preview.warnings).toEqual([expect.stringContaining('cancelled')])
+
+    const [result] = await importOrders(payload, alice, 'robu', ROBU_KEY, ['3790001'])
+    expect(result).toMatchObject({ status: 'imported', partsCreated: 1, photos: 0 })
+    const purchase = await payload.findByID({
+      collection: 'purchases',
+      id: result.purchaseId,
+      depth: 1,
+      user: alice,
+      overrideAccess: false,
+    })
+    expect(purchase).toMatchObject({
+      orderNumber: '#3790001',
+      externalId: 'robu:3790001',
+      total: 649,
+      shipping: 49,
+      orderedAt: '2026-11-02T10:01:16.000Z',
+    })
+    expect(typeof purchase.supplier === 'object' && purchase.supplier?.name).toBe('Robu')
+    const { docs } = await payload.find({
+      collection: 'supplier-parts',
+      where: { sku: { equals: 'R264392' } },
+      depth: 0,
+      user: alice,
+      overrideAccess: false,
+    })
+    expect(docs[0].url).toBe('https://robu.in/product/double-side-fr4-pcb/')
+    expect((await previewOrders(payload, alice, 'robu', ROBU_KEY, ['3790001']))[0].imported).toBe(
+      true,
+    )
   })
 })

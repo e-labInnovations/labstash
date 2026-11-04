@@ -6,7 +6,7 @@ import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
 import { addFile, addLink, fileKind, removeFile, removeLink } from '@/lib/attachments'
 import { createBox } from '@/lib/boxes'
 import { attempt } from '@/lib/result'
-import { importOrders, listOrders, previewOrders } from '@/lib/stores/import'
+import { importOrders, isStore, listOrders, previewOrders } from '@/lib/stores/import'
 import { updateLab } from '@/lib/labSettings'
 import { setShared } from '@/lib/catalog'
 import { createPart, updatePart } from '@/lib/parts'
@@ -315,14 +315,20 @@ export async function storeOrders(key: string) {
   return attempt(() => listOrders(payload, user, key))
 }
 
-export async function storePreview(key: string, ids: string[]) {
+export async function storePreview(store: string, key: string, ids: string[]) {
   const { payload, user } = await requireSession()
-  return attempt(() => previewOrders(payload, user, key, ids))
+  return attempt(async () => {
+    if (!isStore(store)) throw new Error('Pick a store')
+    return previewOrders(payload, user, store, key, ids)
+  })
 }
 
-export async function storeImport(key: string, ids: string[]) {
+export async function storeImport(store: string, key: string, ids: string[]) {
   const { payload, user } = await requireSession()
-  const result = await attempt(() => importOrders(payload, user, key, ids))
+  const result = await attempt(async () => {
+    if (!isStore(store)) throw new Error('Pick a store')
+    return importOrders(payload, user, store, key, ids)
+  })
   if (result.ok) revalidatePath('/', 'layout')
   return result
 }

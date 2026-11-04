@@ -1,8 +1,8 @@
 import type { Payload } from 'payload'
 
 import { labsOf } from '@/access'
-import { STORE_URL, parseEtstoreOrder } from '@/importers/etstore'
-import { importOrder } from '@/importers/importOrder'
+import { type ParsedOrder, STORE_URL, parseEtstoreOrder } from '@/importers/etstore'
+import { type SupplierSpec, importOrder } from '@/importers/importOrder'
 import { idOf } from '@/ledger/rules'
 import type { User } from '@/payload-types'
 
@@ -12,11 +12,32 @@ import {
   fetchEtstoreOrder,
   listEtstoreOrders,
 } from './etstore'
+import { ROBU_URL, fetchRobuOrder } from './robu'
 
 // Importing a store's orders into the user's lab. The store key is used for the calls and
 // dropped; nothing about the store account is stored.
 
-const ETSTORE = { name: 'ETstore', website: STORE_URL, importer: 'etstore' as const }
+const STORES: Record<
+  'etstore' | 'robu',
+  {
+    supplier: SupplierSpec
+    order: (key: string, id: string) => Promise<ParsedOrder>
+    photos?: (key: string, id: string) => Promise<Map<string, string>>
+  }
+> = {
+  etstore: {
+    supplier: { name: 'ETstore', website: STORE_URL, importer: 'etstore' },
+    order: async (key, id) => parseEtstoreOrder(await fetchEtstoreOrder(key, id)),
+    photos: etstorePhotos,
+  },
+  robu: {
+    supplier: { name: 'Robu', website: ROBU_URL, importer: 'robu' },
+    order: fetchRobuOrder,
+  },
+}
+export type Store = keyof typeof STORES
+export const isStore = (s: unknown): s is Store => typeof s === 'string' && s in STORES
+
 const MAX_PER_IMPORT = 10
 
 const labOf = (user: User) => {
@@ -53,11 +74,26 @@ export type PreviewLine = {
 }
 
 /** What importing these orders would do, line by line, without writing anything. */
-export const previewOrders = async (payload: Payload, user: User, key: string, ids: string[]) => {
+export const previewOrders = async (
+  payload: Payload,
+  user: User,
+  store: Store,
+  key: string,
+  ids: string[],
+) => {
   if (ids.length === 0) throw new Error('Pick at least one order')
   if (ids.length > MAX_PER_IMPORT) throw new Error(`Pick up to ${MAX_PER_IMPORT} orders at a time`)
-  const orders = await Promise.all(ids.map((id) => fetchEtstoreOrder(key, id)))
-  const parsed = orders.map(parseEtstoreOrder)
+  const parsed = await Promise.all(ids.map((id) => STORES[store].order(key, id)))
+  const { docs: existing } = await payload.find({
+    collection: 'purchases',
+    where: { externalId: { in: parsed.map((p) => p.order.externalId) } },
+    pagination: false,
+    depth: 0,
+    select: { externalId: true },
+    user,
+    overrideAccess: false,
+  })
+  const imported = new Set(existing.map((p) => p.externalId))
   const skus = [...new Set(parsed.flatMap((p) => p.lines.map((l) => l.sku)))]
   const { docs } = await payload.find({
     collection: 'supplier-parts',
@@ -79,6 +115,7 @@ export const previewOrders = async (payload: Payload, user: User, key: string, i
     id: p.order.externalId,
     number: p.order.orderNumber,
     total: p.order.total,
+    imported: imported.has(p.order.externalId),
     warnings: p.warnings,
     lines: p.lines.map((l): PreviewLine => ({
       sku: l.sku,
@@ -100,20 +137,27 @@ export type ImportedOrder = {
 }
 
 /** Imports the orders into the user's lab, each in its own transaction, then adds photos. */
-export const importOrders = async (payload: Payload, user: User, key: string, ids: string[]) => {
+export const importOrders = async (
+  payload: Payload,
+  user: User,
+  store: Store,
+  key: string,
+  ids: string[],
+) => {
   if (ids.length === 0) throw new Error('Pick at least one order')
   if (ids.length > MAX_PER_IMPORT) throw new Error(`Pick up to ${MAX_PER_IMPORT} orders at a time`)
   const lab = labOf(user)
   const results: ImportedOrder[] = []
   for (const id of ids) {
-    const file = await fetchEtstoreOrder(key, id)
-    const result = await importOrder(payload, parseEtstoreOrder(file), ETSTORE, lab)
+    const { supplier, order, photos: photosOf } = STORES[store]
+    const parsed = await order(key, id)
+    const result = await importOrder(payload, parsed, supplier, lab)
     const photos =
-      result.status === 'imported' && result.partsCreated > 0
-        ? await addPhotos(payload, user, result.purchaseId, await etstorePhotos(key, id))
+      photosOf && result.status === 'imported' && result.partsCreated > 0
+        ? await addPhotos(payload, user, result.purchaseId, await photosOf(key, id))
         : 0
     results.push({
-      number: file.order,
+      number: parsed.order.orderNumber,
       purchaseId: result.purchaseId,
       status: result.status,
       partsCreated: result.status === 'imported' ? result.partsCreated : 0,
