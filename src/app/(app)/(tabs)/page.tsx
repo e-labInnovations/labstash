@@ -23,7 +23,12 @@ export default async function HomePage() {
           <span className="hidden lg:inline">Your stash</span>
         </h1>
         <div className="flex items-center gap-3">
-          <span className="text-[15px] text-muted">{stats.parts} parts</span>
+          <Link
+            href="/parts"
+            className="flex h-11 items-center rounded-xl border border-line px-4 font-semibold"
+          >
+            {stats.parts} parts
+          </Link>
           <Link
             href="/parts/new"
             className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-4 font-semibold text-mask-ink"
