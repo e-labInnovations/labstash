@@ -8,6 +8,8 @@ export const INBOX_CODE = 'INBOX'
 export const Locations: CollectionConfig = {
   slug: 'locations',
   versions: false,
+  // Each lab has its own B01 and its own INBOX
+  indexes: [{ fields: ['lab', 'code'], unique: true }],
   admin: {
     useAsTitle: 'code',
     defaultColumns: ['code', 'name', 'kind', 'parent'],
@@ -23,10 +25,9 @@ export const Locations: CollectionConfig = {
       name: 'code',
       type: 'text',
       required: true,
-      unique: true,
       index: true,
       admin: {
-        description: 'Printed on the label, e.g. B03 or B03-17',
+        description: 'Printed on the label, e.g. B03 or B03-17. Unique within a lab.',
       },
     },
     {

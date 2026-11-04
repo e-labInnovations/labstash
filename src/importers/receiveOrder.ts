@@ -5,6 +5,8 @@ import { idOf } from '../ledger/rules'
 import { withTransaction } from './importOrder'
 
 export type ReceiveOptions = {
+  /** The lab whose order this is */
+  lab: string
   /** Skus that did not arrive: their lines are marked cancelled */
   except?: string[]
   /** Skus that arrived short: sku → quantity actually received */
@@ -24,13 +26,13 @@ export type ReceiveResult = {
 export const receiveOrder = async (
   payload: Payload,
   orderNumber: string,
-  { except = [], short = {} }: ReceiveOptions = {},
+  { lab, except = [], short = {} }: ReceiveOptions,
 ): Promise<ReceiveResult> =>
   withTransaction(payload, async (req) => {
     const { docs: purchases } = await req.payload.find({
       collection: 'purchases',
       overrideAccess: true,
-      where: { orderNumber: { equals: orderNumber } },
+      where: { and: [{ orderNumber: { equals: orderNumber } }, { lab: { equals: lab } }] },
       limit: 2,
       depth: 0,
       req,
@@ -58,7 +60,7 @@ export const receiveOrder = async (
     const unknown = [...except, ...Object.keys(short)].filter((s) => !known.has(s))
     if (unknown.length) throw new Error(`Not on this order: ${unknown.join(', ')}`)
 
-    const inbox = await ensureInbox(req)
+    const inbox = await ensureInbox(req, lab)
     const result: ReceiveResult = { received: [], cancelled: [], skipped: [] }
 
     for (const line of lines) {
@@ -92,6 +94,7 @@ export const receiveOrder = async (
         collection: 'stock-movements',
         overrideAccess: true,
         data: {
+          lab,
           type: 'receive',
           quantity,
           part: idOf(line.part)!,
@@ -120,6 +123,13 @@ export const receiveLines = async (
   withTransaction(
     payload,
     async (req) => {
+      // Read as the user: an order in another lab is simply not found
+      const purchase = await req.payload
+        .findByID({ collection: 'purchases', id: purchaseId, depth: 0, overrideAccess: false, req })
+        .catch(() => null)
+      if (!purchase) throw new Error('Order not found')
+      const lab = idOf(purchase.lab)!
+
       const { docs: lines } = await req.payload.find({
         collection: 'purchase-lines',
         overrideAccess: true,
@@ -132,7 +142,7 @@ export const receiveLines = async (
       const unknown = Object.keys(receipts).filter((id) => !byId.has(id))
       if (unknown.length) throw new Error('Some lines are not on this order')
 
-      const inbox = await ensureInbox(req)
+      const inbox = await ensureInbox(req, lab)
       let received = 0
       let cancelled = 0
 
@@ -160,6 +170,7 @@ export const receiveLines = async (
           collection: 'stock-movements',
           overrideAccess: true,
           data: {
+            lab,
             type: 'receive',
             quantity: receipt,
             part: idOf(line.part)!,
@@ -176,11 +187,12 @@ export const receiveLines = async (
     user,
   )
 
-export const ensureInbox = async (req: PayloadRequest) => {
+/** The lab's INBOX, created on first use. */
+export const ensureInbox = async (req: PayloadRequest, lab: string) => {
   const { docs } = await req.payload.find({
     collection: 'locations',
     overrideAccess: true,
-    where: { code: { equals: INBOX_CODE } },
+    where: { and: [{ code: { equals: INBOX_CODE } }, { lab: { equals: lab } }] },
     limit: 1,
     depth: 0,
     req,
@@ -189,7 +201,7 @@ export const ensureInbox = async (req: PayloadRequest) => {
   const inbox = await req.payload.create({
     collection: 'locations',
     overrideAccess: true,
-    data: { code: INBOX_CODE, name: 'Inbox — received, not yet put away', kind: 'inbox' },
+    data: { lab, code: INBOX_CODE, name: 'Inbox — received, not yet put away', kind: 'inbox' },
     req,
   })
   return inbox.id

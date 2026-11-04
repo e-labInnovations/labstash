@@ -75,8 +75,7 @@ const USED: Record<string, number> = { ET7879: 1, ETA1841: 2, ET9232: 5, ET9251:
 export const SEED_MARKER = BOXES[0].code
 
 export type SeedResult =
-  | { status: 'skipped' }
-  | { status: 'seeded'; boxes: number; putAway: number; inInbox: number }
+  { status: 'skipped' } | { status: 'seeded'; boxes: number; putAway: number; inInbox: number }
 
 export const seed = async (payload: Payload): Promise<SeedResult> => {
   const marker = await payload.count({
@@ -86,30 +85,37 @@ export const seed = async (payload: Payload): Promise<SeedResult> => {
   })
   if (marker.totalDocs > 0) return { status: 'skipped' }
 
-  await ensureDevUser(payload, { force: true })
+  // Everything goes into the dev user's lab
+  const lab = await ensureDevUser(payload, { force: true })
 
   const parsed = parseEtstoreOrder(JSON.parse(readFileSync(ORDER_FILE, 'utf8')))
-  await importOrder(payload, parsed, { name: 'ETstore', website: STORE_URL, importer: 'etstore' })
+  await importOrder(
+    payload,
+    parsed,
+    { name: 'ETstore', website: STORE_URL, importer: 'etstore' },
+    lab,
+  )
 
   // Only receive what is still outstanding (a re-run after a partial receive is fine)
   const { docs: purchases } = await payload.find({
     collection: 'purchases',
     overrideAccess: true,
-    where: { externalId: { equals: parsed.order.externalId } },
+    where: { and: [{ externalId: { equals: parsed.order.externalId } }, { lab: { equals: lab } }] },
     depth: 0,
   })
   if (purchases[0]?.status === 'ordered') {
     await receiveOrder(payload, parsed.order.orderNumber, {
+      lab,
       except: ['ET8068'],
       short: { ET7246: 1 },
     })
   }
 
   return withTransaction(payload, async (req) => {
-    const inbox = await ensureInbox(req)
+    const inbox = await ensureInbox(req, lab)
     const boxCells = new Map<string, string[]>()
-    for (const box of BOXES) boxCells.set(box.code, await createBox(box, req))
-    const drawer = await create(req, 'locations', {
+    for (const box of BOXES) boxCells.set(box.code, await createBox(box, req, lab))
+    const drawer = await create(req, lab, 'locations', {
       code: DRAWER.code,
       name: DRAWER.name,
       kind: 'other',
@@ -124,7 +130,7 @@ export const seed = async (payload: Payload): Promise<SeedResult> => {
       req,
     })
 
-    const skuOf = await skuLookup(req)
+    const skuOf = await skuLookup(req, lab)
     const nextCell = new Map<string, number>()
     let putAway = 0
 
@@ -152,7 +158,13 @@ export const seed = async (payload: Payload): Promise<SeedResult> => {
       const cell = box ? boxCells.get(box.code)![i] : undefined
       const to = cell ?? drawer
       if (box) nextCell.set(box.code, i + 1)
-      await move(req, { type: 'move', part: part.id, quantity: row.quantity, from: inbox, to })
+      await move(req, lab, {
+        type: 'move',
+        part: part.id,
+        quantity: row.quantity,
+        from: inbox,
+        to,
+      })
       if (cell && box?.approximate) await markApproximate(req, part.id, to)
       putAway++
     }
@@ -182,7 +194,7 @@ export const seed = async (payload: Payload): Promise<SeedResult> => {
         req,
       })
       if (docs[0]) {
-        await move(req, {
+        await move(req, lab, {
           type: 'use',
           part: partId,
           quantity,
@@ -203,12 +215,21 @@ export const seed = async (payload: Payload): Promise<SeedResult> => {
 
 const create = async (
   req: PayloadRequest,
+  lab: string,
   collection: 'locations',
   data: Record<string, unknown>,
-) => (await req.payload.create({ collection, overrideAccess: true, data: data as never, req })).id
+) =>
+  (
+    await req.payload.create({
+      collection,
+      overrideAccess: true,
+      data: { lab, ...data } as never,
+      req,
+    })
+  ).id
 
-const createBox = async (box: Box, req: PayloadRequest) => {
-  const id = await create(req, 'locations', {
+const createBox = async (box: Box, req: PayloadRequest, lab: string) => {
+  const id = await create(req, lab, 'locations', {
     code: box.code,
     name: box.name,
     kind: 'box',
@@ -217,7 +238,7 @@ const createBox = async (box: Box, req: PayloadRequest) => {
   const cells: string[] = []
   for (let n = 1; n <= box.compartments; n++) {
     cells.push(
-      await create(req, 'locations', {
+      await create(req, lab, 'locations', {
         code: `${box.code}-${String(n).padStart(2, '0')}`,
         kind: 'compartment',
         parent: id,
@@ -229,6 +250,7 @@ const createBox = async (box: Box, req: PayloadRequest) => {
 
 const move = (
   req: PayloadRequest,
+  lab: string,
   data: {
     type: 'move' | 'use'
     part: string
@@ -241,7 +263,7 @@ const move = (
   req.payload.create({
     collection: 'stock-movements',
     overrideAccess: true,
-    data: { ...data, occurredAt: new Date().toISOString() },
+    data: { lab, ...data, occurredAt: new Date().toISOString() },
     req,
   })
 
@@ -266,10 +288,11 @@ const markApproximate = async (req: PayloadRequest, part: string, location: stri
 }
 
 /** part id → store sku */
-const skuLookup = async (req: PayloadRequest) => {
+const skuLookup = async (req: PayloadRequest, lab: string) => {
   const { docs } = await req.payload.find({
     collection: 'supplier-parts',
     overrideAccess: true,
+    where: { lab: { equals: lab } },
     pagination: false,
     depth: 0,
     req,

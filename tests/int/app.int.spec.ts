@@ -13,13 +13,13 @@ import { compartmentCodes, createBox } from '@/lib/boxes'
 import { boxLabelsFor, labelsFor } from '@/lib/labels'
 import { createPart, updatePart } from '@/lib/parts'
 import { putAwayAll } from '@/lib/putAway'
-import type { User } from '@/payload-types'
 
-import { freshPayload } from './setup'
+import { freshPayload, newLab, newUser } from './setup'
 
 // The PWA's read and write paths, run as a signed-in user with access control on.
 let payload: Payload
-let user: User
+let user: Awaited<ReturnType<typeof newUser>>
+let lab: string
 let purchaseId: string
 
 const parsed = parseEtstoreOrder(
@@ -39,16 +39,14 @@ const lineFor = async (sku: string) => {
 describe('app flows as a user', () => {
   beforeAll(async () => {
     payload = await freshPayload()
-    user = await payload.create({
-      collection: 'users',
-      overrideAccess: true,
-      data: { email: 'me@example.com', password: 'secret' },
-    })
-    const result = await importOrder(payload, parsed, {
-      name: 'ETstore',
-      website: STORE_URL,
-      importer: 'etstore',
-    })
+    lab = await newLab(payload, 'My lab')
+    user = await newUser(payload, 'me@example.com', lab)
+    const result = await importOrder(
+      payload,
+      parsed,
+      { name: 'ETstore', website: STORE_URL, importer: 'etstore' },
+      lab,
+    )
     purchaseId = result.purchaseId
   })
 

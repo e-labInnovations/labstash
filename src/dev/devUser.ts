@@ -8,11 +8,34 @@ export const devUser = {
   password: process.env.DEV_USER_PASSWORD || 'dev',
 }
 
-/** `force` lets the local seed script create the user outside `next dev`. */
+/**
+ * Creates the dev admin and their lab on an empty database, and returns that lab.
+ * `force` lets the local seed script use it outside `next dev`.
+ */
 export const ensureDevUser = async (payload: Payload, { force = false } = {}) => {
-  if (!isDev && !force) return
+  if (!isDev && !force) return ''
+  const { docs } = await payload.find({
+    collection: 'users',
+    where: { email: { equals: devUser.email } },
+    overrideAccess: true,
+    depth: 0,
+    limit: 1,
+  })
+  const existing = docs[0]?.labs?.[0]?.lab
+  if (existing) return typeof existing === 'object' ? existing.id : existing
+
   const { totalDocs } = await payload.count({ collection: 'users', overrideAccess: true })
-  if (totalDocs > 0) return
-  await payload.create({ collection: 'users', overrideAccess: true, data: devUser })
-  payload.logger.info(`Created dev user ${devUser.email}`)
+  if (totalDocs > 0 && !force) return ''
+  const lab = await payload.create({
+    collection: 'labs',
+    overrideAccess: true,
+    data: { name: 'Dev lab' },
+  })
+  await payload.create({
+    collection: 'users',
+    overrideAccess: true,
+    data: { ...devUser, role: 'admin', labs: [{ lab: lab.id }] },
+  })
+  payload.logger.info(`Created dev user ${devUser.email} in ${lab.name}`)
+  return lab.id
 }

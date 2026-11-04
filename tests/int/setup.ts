@@ -14,3 +14,21 @@ export const freshPayload = async (): Promise<Payload> => {
   await payload.db.migrateFresh({ forceAcceptWarning: true })
   return payload
 }
+
+export const newLab = async (payload: Payload, name: string) =>
+  (await payload.create({ collection: 'labs', overrideAccess: true, data: { name } })).id
+
+/** A user in `lab`, shaped like the app's session user (own lab only, even for an admin). */
+export const newUser = async (
+  payload: Payload,
+  email: string,
+  lab: string,
+  role: 'admin' | 'user' = 'user',
+) => {
+  const user = await payload.create({
+    collection: 'users',
+    overrideAccess: true,
+    data: { email, password: 'secret', role, labs: [{ lab }] },
+  })
+  return { ...user, collection: 'users' as const, _ownLabOnly: true as const }
+}

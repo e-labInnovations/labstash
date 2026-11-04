@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { Categories } from './Categories'
 import { Folders } from './Folders'
+import { Labs } from './Labs'
 import { Locations } from './Locations'
 import { Media } from './Media'
 import { Parts } from './Parts'
@@ -17,6 +18,7 @@ import { Users } from './Users'
 export {
   Categories,
   Folders,
+  Labs,
   Locations,
   Media,
   Parts,
@@ -45,4 +47,5 @@ export const collections: CollectionConfig[] = [
   Folders,
   Tags,
   Users,
+  Labs,
 ]

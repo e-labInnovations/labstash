@@ -48,6 +48,7 @@ export const StockMovements: CollectionConfig = {
         })
         await applyMovement(
           {
+            lab: idOf(movement.lab),
             type: movement.type,
             quantity: movement.quantity,
             part: movement.part,

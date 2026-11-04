@@ -1,15 +1,17 @@
-// npm run receive -- <orderNumber> [--except SKU,SKU] [--short SKU=qty,SKU=qty]
+// npm run receive -- <orderNumber> [--except SKU,SKU] [--short SKU=qty,SKU=qty] [--lab <name>]
 import { parseArgs } from 'node:util'
 import { getPayload } from 'payload'
 
 import config from '../payload.config'
 import { receiveOrder } from '../importers/receiveOrder'
+import { resolveLab } from './lab'
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     except: { type: 'string', default: '' },
     short: { type: 'string', default: '' },
+    lab: { type: 'string' },
   },
 })
 if (positionals.length !== 1) {
@@ -34,7 +36,11 @@ const short = Object.fromEntries(
 )
 
 const payload = await getPayload({ config })
-const result = await receiveOrder(payload, positionals[0], { except: list(values.except), short })
+const result = await receiveOrder(payload, positionals[0], {
+  lab: await resolveLab(payload, values.lab),
+  except: list(values.except),
+  short,
+})
 
 const pcs = result.received.reduce((s, r) => s + r.quantity, 0)
 console.log(`Received ${result.received.length} lines (${pcs} pcs) into INBOX`)

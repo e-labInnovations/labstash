@@ -92,6 +92,7 @@ export interface Config {
     folders: Folder;
     tags: Tag;
     users: User;
+    labs: Lab;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -122,6 +123,7 @@ export interface Config {
     folders: FoldersSelect<false> | FoldersSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    labs: LabsSelect<false> | LabsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -172,6 +174,7 @@ export interface UserAuthOperations {
  */
 export interface Part {
   id: string;
+  lab?: (string | null) | Lab;
   name: string;
   mpn?: string | null;
   manufacturer?: string | null;
@@ -232,20 +235,11 @@ export interface Part {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
+ * via the `definition` "labs".
  */
-export interface Category {
+export interface Lab {
   id: string;
   name: string;
-  parent?: (string | null) | Category;
-  breadcrumbs?:
-    | {
-        doc?: (string | null) | Category;
-        url?: string | null;
-        label?: string | null;
-        id?: string | null;
-      }[]
-    | null;
   createdBy?: {
     relationTo: 'users';
     value: string | User;
@@ -263,6 +257,13 @@ export interface Category {
  */
 export interface User {
   id: string;
+  role: 'admin' | 'user';
+  labs?:
+    | {
+        lab: string | Lab;
+        id?: string | null;
+      }[]
+    | null;
   createdBy?: {
     relationTo: 'users';
     value: string | User;
@@ -296,6 +297,33 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  name: string;
+  parent?: (string | null) | Category;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Category;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tags".
  */
 export interface Tag {
@@ -321,6 +349,7 @@ export interface Tag {
  */
 export interface Media {
   id: string;
+  lab?: (string | null) | Lab;
   alt?: string | null;
   kind?: ('image' | 'datasheet' | 'model3d' | 'kicad' | 'other') | null;
   part?: (string | null) | Part;
@@ -399,6 +428,7 @@ export interface Folder {
  */
 export interface Stock {
   id: string;
+  lab?: (string | null) | Lab;
   part: string | Part;
   location: string | Location;
   quantity: number;
@@ -423,8 +453,9 @@ export interface Stock {
  */
 export interface Location {
   id: string;
+  lab?: (string | null) | Lab;
   /**
-   * Printed on the label, e.g. B03 or B03-17
+   * Printed on the label, e.g. B03 or B03-17. Unique within a lab.
    */
   code: string;
   name?: string | null;
@@ -461,6 +492,7 @@ export interface Location {
  */
 export interface SupplierPart {
   id: string;
+  lab?: (string | null) | Lab;
   supplier: string | Supplier;
   part: string | Part;
   /**
@@ -513,6 +545,7 @@ export interface Supplier {
  */
 export interface StockMovement {
   id: string;
+  lab?: (string | null) | Lab;
   type: 'receive' | 'move' | 'use' | 'adjust';
   quantity: number;
   occurredAt: string;
@@ -538,6 +571,7 @@ export interface StockMovement {
  */
 export interface PurchaseLine {
   id: string;
+  lab?: (string | null) | Lab;
   purchase: string | Purchase;
   /**
    * Line title as on the order
@@ -575,6 +609,7 @@ export interface PurchaseLine {
  */
 export interface Purchase {
   id: string;
+  lab?: (string | null) | Lab;
   supplier: string | Supplier;
   orderNumber: string;
   orderedAt?: string | null;
@@ -685,6 +720,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'labs';
+        value: string | Lab;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -755,6 +794,7 @@ export interface PayloadLlmInstruction {
  * via the `definition` "parts_select".
  */
 export interface PartsSelect<T extends boolean = true> {
+  lab?: T;
   name?: T;
   mpn?: T;
   manufacturer?: T;
@@ -785,6 +825,7 @@ export interface PartsSelect<T extends boolean = true> {
  * via the `definition` "stock_select".
  */
 export interface StockSelect<T extends boolean = true> {
+  lab?: T;
   part?: T;
   location?: T;
   quantity?: T;
@@ -799,6 +840,7 @@ export interface StockSelect<T extends boolean = true> {
  * via the `definition` "stock-movements_select".
  */
 export interface StockMovementsSelect<T extends boolean = true> {
+  lab?: T;
   type?: T;
   quantity?: T;
   occurredAt?: T;
@@ -817,6 +859,7 @@ export interface StockMovementsSelect<T extends boolean = true> {
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
+  lab?: T;
   code?: T;
   name?: T;
   kind?: T;
@@ -862,6 +905,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  * via the `definition` "purchases_select".
  */
 export interface PurchasesSelect<T extends boolean = true> {
+  lab?: T;
   supplier?: T;
   orderNumber?: T;
   orderedAt?: T;
@@ -883,6 +927,7 @@ export interface PurchasesSelect<T extends boolean = true> {
  * via the `definition` "purchase-lines_select".
  */
 export interface PurchaseLinesSelect<T extends boolean = true> {
+  lab?: T;
   purchase?: T;
   title?: T;
   part?: T;
@@ -914,6 +959,7 @@ export interface SuppliersSelect<T extends boolean = true> {
  * via the `definition` "supplier-parts_select".
  */
 export interface SupplierPartsSelect<T extends boolean = true> {
+  lab?: T;
   supplier?: T;
   part?: T;
   sku?: T;
@@ -931,6 +977,7 @@ export interface SupplierPartsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  lab?: T;
   alt?: T;
   kind?: T;
   part?: T;
@@ -1013,6 +1060,13 @@ export interface TagsSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
+  labs?:
+    | T
+    | {
+        lab?: T;
+        id?: T;
+      };
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
@@ -1035,6 +1089,17 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "labs_select".
+ */
+export interface LabsSelect<T extends boolean = true> {
+  name?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1132,7 +1197,8 @@ export interface CollectionQueryWidget {
       | 'media'
       | 'folders'
       | 'tags'
-      | 'users';
+      | 'users'
+      | 'labs';
     where?:
       | {
           [k: string]: unknown;
@@ -1169,6 +1235,7 @@ export interface ActivityWidget {
           | 'folders'
           | 'tags'
           | 'users'
+          | 'labs'
         )[]
       | null;
   };

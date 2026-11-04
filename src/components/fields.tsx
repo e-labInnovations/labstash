@@ -157,10 +157,10 @@ export function LocationPicker({
             <p className="mt-2 text-[15px] text-muted">
               {query.trim() ? `No location matches “${query.trim()}”.` : 'No boxes yet.'}{' '}
               <Link
-                href="/admin/collections/locations/create"
+                href="/locations"
                 className="font-semibold text-mask underline underline-offset-4"
               >
-                Add one in the admin
+                Add a box
               </Link>
             </p>
           )}

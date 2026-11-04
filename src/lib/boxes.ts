@@ -38,7 +38,8 @@ export const createBox = async (payload: Payload, user: User, input: NewBox) => 
   const taken = await payload.count({
     collection: 'locations',
     where: { code: { in: [code, ...compartmentCodes(code, input.compartments)] } },
-    overrideAccess: true,
+    user: { ...user, collection: 'users' },
+    overrideAccess: false,
   })
   if (taken.totalDocs > 0)
     throw new Error(`${code} or one of its compartment codes is already used`)

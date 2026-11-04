@@ -13,13 +13,13 @@ import { idOf, isLowStock, movementDeltas } from './rules'
  * whole thing back, movement included.
  */
 export const applyMovement = async (
-  movement: MovementInput & { part: unknown },
+  movement: MovementInput & { part: unknown; lab?: string | null },
   req: PayloadRequest,
 ) => {
   const partId = idOf(movement.part)!
 
   for (const { location, delta } of movementDeltas(movement)) {
-    await applyDelta(partId, location, delta, req)
+    await applyDelta(partId, location, delta, req, movement.lab ?? undefined)
   }
   await refreshPartTotals(partId, req)
 
@@ -48,7 +48,13 @@ export const applyMovement = async (
   }
 }
 
-const applyDelta = async (part: string, location: string, delta: number, req: PayloadRequest) => {
+const applyDelta = async (
+  part: string,
+  location: string,
+  delta: number,
+  req: PayloadRequest,
+  lab?: string,
+) => {
   const { docs } = await req.payload.find({
     collection: 'stock',
     overrideAccess: true,
@@ -81,7 +87,8 @@ const applyDelta = async (part: string, location: string, delta: number, req: Pa
       req.payload.create({
         collection: 'stock',
         overrideAccess: true,
-        data: { part, location, quantity: next },
+        // A stock row lives in its movement's lab (the plugin checks part and box are in it too)
+        data: { lab, part, location, quantity: next },
         req,
       }),
     )

@@ -3,9 +3,10 @@ import { beforeAll, describe, expect, it } from 'vitest'
 
 import { withTransaction } from '@/importers/importOrder'
 
-import { freshPayload } from './setup'
+import { freshPayload, newLab } from './setup'
 
 let payload: Payload
+let lab: string
 let part: string
 let boxA: string
 let boxB: string
@@ -14,7 +15,7 @@ const move = (data: Record<string, unknown>) =>
   payload.create({
     collection: 'stock-movements',
     overrideAccess: true,
-    data: { part, occurredAt: new Date().toISOString(), ...data } as never,
+    data: { lab, part, occurredAt: new Date().toISOString(), ...data } as never,
   })
 
 const stockAt = async (location: string) => {
@@ -33,25 +34,26 @@ const partDoc = () =>
 describe('stock ledger', () => {
   beforeAll(async () => {
     payload = await freshPayload()
+    lab = await newLab(payload, 'My lab')
     part = (
       await payload.create({
         collection: 'parts',
         overrideAccess: true,
-        data: { name: 'CH32V003J4M6', minStock: 2 },
+        data: { lab, name: 'CH32V003J4M6', minStock: 2 },
       })
     ).id
     boxA = (
       await payload.create({
         collection: 'locations',
         overrideAccess: true,
-        data: { code: 'B01', kind: 'box' },
+        data: { lab, code: 'B01', kind: 'box' },
       })
     ).id
     boxB = (
       await payload.create({
         collection: 'locations',
         overrideAccess: true,
-        data: { code: 'B01-01', kind: 'compartment', parent: boxA },
+        data: { lab, code: 'B01-01', kind: 'compartment', parent: boxA },
       })
     ).id
   })
@@ -111,6 +113,7 @@ describe('stock ledger', () => {
       collection: 'stock-movements',
       overrideAccess: true,
       data: {
+        lab,
         type: 'adjust',
         part,
         quantity: 2,
@@ -125,6 +128,7 @@ describe('stock ledger', () => {
       collection: 'stock-movements',
       overrideAccess: true,
       data: {
+        lab,
         type: 'adjust',
         part,
         quantity: 2,
@@ -181,6 +185,7 @@ describe('stock ledger', () => {
         collection: 'stock-movements',
         overrideAccess: true,
         data: {
+          lab,
           type: 'receive',
           part,
           quantity: 1,

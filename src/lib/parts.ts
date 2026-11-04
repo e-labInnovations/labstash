@@ -2,6 +2,7 @@ import type { Payload } from 'payload'
 
 import { guessPackage, guessValue } from '@/importers/etstore'
 import { withTransaction } from '@/importers/importOrder'
+import { idOf } from '@/ledger/rules'
 import { ensureInbox } from '@/importers/receiveOrder'
 import { formatValue } from '@/lib/format'
 import { parseValue } from '@/lib/searchQuery'
@@ -77,7 +78,7 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
       })
 
       if (input.quantity > 0) {
-        const to = input.location || (await ensureInbox(req))
+        const to = input.location || (await ensureInbox(req, idOf(part.lab)!))
         await payload.create({
           collection: 'stock-movements',
           data: {

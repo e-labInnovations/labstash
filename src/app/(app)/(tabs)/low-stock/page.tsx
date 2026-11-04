@@ -16,9 +16,7 @@ export default async function LowStockPage() {
         <p className="mt-1 text-muted">Parts at or below their reorder level.</p>
       </PageHeader>
       {parts.length === 0 ? (
-        <Empty>
-          Nothing is running low. Set a reorder level on a part in the admin to track it.
-        </Empty>
+        <Empty>Nothing is running low. To track a part, edit it and set Reorder at.</Empty>
       ) : (
         <ul className="lg:grid lg:grid-cols-2 lg:gap-x-10">
           {parts.map((part) => {

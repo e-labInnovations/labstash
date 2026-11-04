@@ -8,7 +8,7 @@ export const Media: CollectionConfig = {
   slug: 'media',
   versions: false,
   access: {
-    read: () => true,
+    read: authenticated, // the lab plugin narrows every access to the user's own lab
     create: authenticated,
     update: authenticated,
     delete: authenticated,

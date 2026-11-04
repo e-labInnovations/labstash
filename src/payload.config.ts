@@ -22,7 +22,9 @@ export default buildConfig({
     },
   },
   collections,
-  onInit: ensureDevUser,
+  onInit: async (payload) => {
+    await ensureDevUser(payload)
+  },
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

@@ -27,11 +27,13 @@ export const importOrder = async (
   payload: Payload,
   parsed: ParsedOrder,
   supplierSpec: SupplierSpec,
+  /** The lab the order belongs to; parts are matched and created only within it */
+  lab: string,
 ): Promise<ImportResult> => {
   const existing = await payload.find({
     collection: 'purchases',
     overrideAccess: true,
-    where: { externalId: { equals: parsed.order.externalId } },
+    where: { and: [{ externalId: { equals: parsed.order.externalId } }, { lab: { equals: lab } }] },
     limit: 1,
     depth: 0,
   })
@@ -46,7 +48,7 @@ export const importOrder = async (
     const purchase = await req.payload.create({
       collection: 'purchases',
       overrideAccess: true,
-      data: { supplier, status: 'ordered', ...parsed.order },
+      data: { lab, supplier, status: 'ordered', ...parsed.order },
       req,
     })
 
@@ -54,7 +56,13 @@ export const importOrder = async (
       const { docs } = await req.payload.find({
         collection: 'supplier-parts',
         overrideAccess: true,
-        where: { and: [{ supplier: { equals: supplier } }, { sku: { equals: line.sku } }] },
+        where: {
+          and: [
+            { lab: { equals: lab } },
+            { supplier: { equals: supplier } },
+            { sku: { equals: line.sku } },
+          ],
+        },
         limit: 1,
         depth: 0,
         req,
@@ -67,6 +75,7 @@ export const importOrder = async (
           collection: 'parts',
           overrideAccess: true,
           data: {
+            lab,
             name: line.name,
             package: line.package,
             value: line.value,
@@ -79,6 +88,7 @@ export const importOrder = async (
           collection: 'supplier-parts',
           overrideAccess: true,
           data: {
+            lab,
             supplier,
             part: part.id,
             sku: line.sku,
@@ -96,6 +106,7 @@ export const importOrder = async (
         collection: 'purchase-lines',
         overrideAccess: true,
         data: {
+          lab,
           purchase: purchase.id,
           title: line.title,
           part: supplierPart.part as string,

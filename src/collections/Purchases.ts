@@ -9,6 +9,8 @@ export type PurchaseStatus = (typeof PURCHASE_STATUSES)[number]
 export const Purchases: CollectionConfig = {
   slug: 'purchases',
   versions: false,
+  // Two labs can import the same store order (a shared purchase); each once
+  indexes: [{ fields: ['lab', 'externalId'], unique: true }],
   admin: {
     useAsTitle: 'orderNumber',
     defaultColumns: ['orderNumber', 'supplier', 'orderedAt', 'total', 'status'],
@@ -31,7 +33,6 @@ export const Purchases: CollectionConfig = {
     {
       name: 'externalId',
       type: 'text',
-      unique: true,
       admin: { description: 'Store order id (e.g. Shopify order GID). Makes imports idempotent.' },
     },
     {

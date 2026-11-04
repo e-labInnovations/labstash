@@ -7,7 +7,7 @@ import { STORE_URL, parseEtstoreOrder } from '@/importers/etstore'
 import { importOrder } from '@/importers/importOrder'
 import { receiveOrder } from '@/importers/receiveOrder'
 
-import { freshPayload } from './setup'
+import { freshPayload, newLab } from './setup'
 
 const parsed = parseEtstoreOrder(
   JSON.parse(readFileSync(path.resolve(__dirname, '../fixtures/etstore-order-31860.json'), 'utf8')),
@@ -15,6 +15,7 @@ const parsed = parseEtstoreOrder(
 const etstore = { name: 'ETstore', website: STORE_URL, importer: 'etstore' as const }
 
 let payload: Payload
+let lab: string
 
 const partBySku = async (sku: string) => {
   const { docs } = await payload.find({
@@ -34,10 +35,11 @@ const partBySku = async (sku: string) => {
 describe('ETstore import + receive (order #31860)', () => {
   beforeAll(async () => {
     payload = await freshPayload()
+    lab = await newLab(payload, 'My lab')
   })
 
   it('imports every line as ordered, with no stock yet', async () => {
-    const result = await importOrder(payload, parsed, etstore)
+    const result = await importOrder(payload, parsed, etstore, lab)
     expect(result).toMatchObject({ status: 'imported', partsCreated: 72, partsMatched: 0 })
 
     expect(await payload.count({ collection: 'parts', overrideAccess: true })).toEqual({
@@ -74,7 +76,7 @@ describe('ETstore import + receive (order #31860)', () => {
   })
 
   it('re-importing the same order is a no-op', async () => {
-    expect((await importOrder(payload, parsed, etstore)).status).toBe('exists')
+    expect((await importOrder(payload, parsed, etstore, lab)).status).toBe('exists')
     expect(await payload.count({ collection: 'parts', overrideAccess: true })).toEqual({
       totalDocs: 72,
     })
@@ -86,14 +88,14 @@ describe('ETstore import + receive (order #31860)', () => {
       order: { ...parsed.order, orderNumber: '#99999', externalId: 'gid://shopify/Order/1' },
       lines: parsed.lines.slice(0, 3),
     }
-    expect(await importOrder(payload, reorder, etstore)).toMatchObject({
+    expect(await importOrder(payload, reorder, etstore, lab)).toMatchObject({
       partsCreated: 0,
       partsMatched: 3,
     })
   })
 
   it('rejects receive options naming skus that are not on the order', async () => {
-    await expect(receiveOrder(payload, '#31860', { except: ['ET0000'] })).rejects.toThrow(
+    await expect(receiveOrder(payload, '#31860', { lab, except: ['ET0000'] })).rejects.toThrow(
       /Not on this order: ET0000/,
     )
     expect(await payload.count({ collection: 'stock-movements', overrideAccess: true })).toEqual({
@@ -103,6 +105,7 @@ describe('ETstore import + receive (order #31860)', () => {
 
   it('receives into INBOX, cancelling missing lines and booking short ones', async () => {
     const result = await receiveOrder(payload, '#31860', {
+      lab,
       except: ['ET8068'],
       short: { ET7246: 1 },
     })
@@ -122,7 +125,7 @@ describe('ETstore import + receive (order #31860)', () => {
   })
 
   it('receiving the rest completes the purchase and skips finished lines', async () => {
-    const result = await receiveOrder(payload, '#31860')
+    const result = await receiveOrder(payload, '#31860', { lab })
     expect(result.received).toEqual([{ sku: 'ET7246', quantity: 1 }])
     const { docs } = await payload.find({
       collection: 'purchases',

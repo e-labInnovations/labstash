@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../access'
 
-// A part as sold by one store. Importers match re-imports on (supplier, sku).
+// A part as sold by one store. Importers match re-imports on (supplier, sku) within a lab.
 export const SupplierParts: CollectionConfig = {
   slug: 'supplier-parts',
   versions: false,
@@ -16,7 +16,7 @@ export const SupplierParts: CollectionConfig = {
     update: authenticated,
     delete: authenticated,
   },
-  indexes: [{ fields: ['supplier', 'sku'], unique: true }],
+  indexes: [{ fields: ['lab', 'supplier', 'sku'], unique: true }],
   fields: [
     {
       name: 'supplier',

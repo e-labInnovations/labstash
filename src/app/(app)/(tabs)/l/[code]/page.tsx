@@ -22,7 +22,13 @@ export default async function LocationPage({ params }: { params: Promise<{ code:
     return (
       <>
         <PageHeader title={code} back="/locations" />
-        <Empty>No location has the code “{code}”. Create it in the admin, then scan again.</Empty>
+        <Empty>
+          No box has the code “{code}”. Add it on{' '}
+          <Link href="/locations" className="font-semibold text-mask underline underline-offset-4">
+            Boxes
+          </Link>
+          , then scan again.
+        </Empty>
       </>
     )
   }
