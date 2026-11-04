@@ -18,6 +18,8 @@ const paths = {
   edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
   print: 'M7 9V4h10v5M7 17H4v-8h16v8h-3M7 14h10v6H7z',
   check: 'M5 12.5l4.5 4.5L19 7',
+  share:
+    'M6 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM18 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM18 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1',
 } as const
 
 export type IconName = keyof typeof paths

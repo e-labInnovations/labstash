@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { AddPhoto } from '@/components/AddPhoto'
+import { ShareButton } from '@/components/ShareButton'
 import { Icon } from '@/components/Icon'
 import { PartActions } from '@/components/PartActions'
 import { PhotoGallery } from '@/components/PhotoGallery'
-import { PageHeader, Quantity, Section } from '@/components/ui'
+import { ExternalRow, PageHeader, Quantity, Section } from '@/components/ui'
 import { formatValue } from '@/lib/format'
 import { allLocations, partDetail } from '@/lib/queries'
 import { requireSession } from '@/lib/session'
@@ -52,6 +53,7 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
             <Icon name="print" className="size-5" />
             Label
           </Link>
+          <ShareButton part={part.id} shared={Boolean(part.shared)} />
         </div>
       </PageHeader>
 
@@ -133,22 +135,5 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
     </div>
-  )
-}
-
-function ExternalRow({ href, label }: { href?: string; label: string }) {
-  if (!href) return <li className="px-1 text-muted">{label}</li>
-  return (
-    <li>
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center justify-between rounded-2xl border border-line bg-raised px-4 py-3 font-medium"
-      >
-        {label}
-        <Icon name="external" className="size-5 text-muted" />
-      </a>
-    </li>
   )
 }

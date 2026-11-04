@@ -190,3 +190,21 @@ export function Section({
     </section>
   )
 }
+
+/** A link out (datasheet, store page) as a full-width row; plain text when there is no link. */
+export function ExternalRow({ href, label }: { href?: string; label: string }) {
+  if (!href) return <li className="px-1 text-muted">{label}</li>
+  return (
+    <li>
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-between rounded-2xl border border-line bg-raised px-4 py-3 font-medium"
+      >
+        {label}
+        <Icon name="external" className="size-5 text-muted" />
+      </a>
+    </li>
+  )
+}

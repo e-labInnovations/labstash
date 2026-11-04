@@ -8,8 +8,8 @@ import { BoxMark } from './BoxMark'
 import { Icon, type IconName } from './Icon'
 
 const tabs: Array<{ href: string; label: string; icon: IconName; match: RegExp }> = [
-  { href: '/', label: 'Home', icon: 'home', match: /^\/($|search|parts|low-stock)/ },
-  { href: '/locations', label: 'Boxes', icon: 'box', match: /^\/(locations|l\/|labels)/ },
+  { href: '/', label: 'Home', icon: 'home', match: /^\/($|search|parts|low-stock|catalog)/ },
+  { href: '/locations', label: 'Boxes', icon: 'box', match: /^\/(locations|l\/|labels|share)/ },
   { href: '/scan', label: 'Scan', icon: 'scan', match: /^\/scan/ },
   { href: '/inbox', label: 'Inbox', icon: 'inbox', match: /^\/inbox/ },
   { href: '/orders', label: 'Orders', icon: 'orders', match: /^\/orders/ },
@@ -100,7 +100,9 @@ export function Sidebar({ inboxCount, search }: { inboxCount: number; search: Re
                 >
                   <TabContent active={active}>
                     <Icon name={tab.icon} className="size-5" />
-                    <span data-label className="flex-1">{tab.label}</span>
+                    <span data-label className="flex-1">
+                      {tab.label}
+                    </span>
                     {tab.icon === 'inbox' && <Badge n={inboxCount} className="" />}
                   </TabContent>
                 </Link>

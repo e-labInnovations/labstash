@@ -105,6 +105,20 @@ export const Parts: CollectionConfig = {
       type: 'textarea',
     },
     {
+      // Other labs can find a shared part and copy its details, photos, datasheet and store
+      // links (see lib/catalog.ts). Never its stock, boxes, orders, notes or reorder level.
+      name: 'shared',
+      type: 'checkbox',
+      defaultValue: false,
+      index: true,
+      label: 'Share with other labs',
+      admin: {
+        position: 'sidebar',
+        description:
+          'Other labs can find this part and copy its details, photos, datasheet and store links. Never quantities, boxes, orders or notes.',
+      },
+    },
+    {
       name: 'stock',
       type: 'join',
       collection: 'stock',

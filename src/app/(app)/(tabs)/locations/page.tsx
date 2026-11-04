@@ -23,6 +23,14 @@ export default async function LocationsPage() {
         </h1>
         <div className="flex gap-2">
           <Link
+            href="/share"
+            aria-label="Share parts with other labs"
+            className="flex h-11 items-center gap-1.5 rounded-xl border border-line px-3 font-semibold"
+          >
+            <Icon name="share" className="size-5" />
+            <span className="max-sm:sr-only">Share</span>
+          </Link>
+          <Link
             href="/labels"
             className="flex h-11 items-center gap-1.5 rounded-xl border border-line px-4 font-semibold"
           >

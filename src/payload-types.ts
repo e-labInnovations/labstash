@@ -207,6 +207,10 @@ export interface Part {
    */
   kicadFootprint?: string | null;
   notes?: string | null;
+  /**
+   * Other labs can find this part and copy its details, photos, datasheet and store links. Never quantities, boxes, orders or notes.
+   */
+  shared?: boolean | null;
   stock?: {
     docs?: (string | Stock)[];
     hasNextPage?: boolean;
@@ -812,6 +816,7 @@ export interface PartsSelect<T extends boolean = true> {
   kicadSymbol?: T;
   kicadFootprint?: T;
   notes?: T;
+  shared?: T;
   stock?: T;
   supplierParts?: T;
   images?: T;

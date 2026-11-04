@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
 import { createBox } from '@/lib/boxes'
+import { setShared } from '@/lib/catalog'
 import { createPart, updatePart } from '@/lib/parts'
 import { putAwayAll } from '@/lib/putAway'
 import { requireSession } from '@/lib/session'
@@ -109,6 +110,7 @@ export async function addPart(_: ActionState, form: FormData): Promise<ActionSta
       quantity: num(form.get('quantity')),
       location: str(form.get('location')),
       note: str(form.get('note')),
+      from: str(form.get('from')),
     })
     revalidatePath('/', 'layout')
     return { ok: part.id }
@@ -192,4 +194,19 @@ export async function addPhoto(_: ActionState, form: FormData): Promise<ActionSt
   }
   revalidatePath('/', 'layout')
   return { ok: 'Photo added' }
+}
+
+/** Shares the ticked parts with other labs (`shared=1`), or stops sharing them. */
+export async function shareParts(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const parts = form.getAll('part').filter((p): p is string => typeof p === 'string' && !!p)
+  const shared = form.get('shared') === '1'
+  try {
+    const n = await setShared(payload, user, parts, shared)
+    revalidatePath('/', 'layout')
+    const what = `${n} ${n === 1 ? 'part' : 'parts'}`
+    return { ok: shared ? `Shared ${what} with other labs` : `Stopped sharing ${what}` }
+  } catch (e) {
+    return { error: message(e) }
+  }
 }

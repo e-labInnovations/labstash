@@ -19,11 +19,14 @@ import {
 /** A part that didn't come from an order, with however many you have and where they are. */
 export function AddPartForm({
   name = '',
+  copy,
   categories,
   locations,
   inboxId,
 }: {
   name?: string
+  /** Prefill from a shared part in another lab; the server copies the rest */
+  copy?: { from: string; package: string; mpn: string; category: string; thumb: string | null }
   categories: CategoryOption[]
   locations: LocationOption[]
   inboxId: string | null
@@ -51,6 +54,15 @@ export function AddPartForm({
       }}
       className="flex max-w-xl flex-col gap-5"
     >
+      {copy && <input type="hidden" name="from" value={copy.from} />}
+      {copy?.thumb && (
+        // eslint-disable-next-line @next/next/no-img-element -- served by the catalog route
+        <img
+          src={copy.thumb}
+          alt=""
+          className="size-24 rounded-2xl border border-line bg-white object-contain"
+        />
+      )}
       <Field label="Name">
         <input
           name="name"
@@ -69,18 +81,25 @@ export function AddPartForm({
         <Field label="Package">
           <input
             name="package"
+            defaultValue={copy?.package}
             placeholder="0603, TO-220"
             autoComplete="off"
             className={inputClass}
           />
         </Field>
         <Field label="Part number">
-          <input name="mpn" placeholder="NE555P" autoComplete="off" className={inputClass} />
+          <input
+            name="mpn"
+            defaultValue={copy?.mpn}
+            placeholder="NE555P"
+            autoComplete="off"
+            className={inputClass}
+          />
         </Field>
       </div>
 
       <Field label="Category">
-        <select name="category" defaultValue="" className={inputClass}>
+        <select name="category" defaultValue={copy?.category ?? ''} className={inputClass}>
           <option value="">None</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>

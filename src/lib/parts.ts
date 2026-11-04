@@ -1,9 +1,10 @@
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 import { guessPackage, guessValue } from '@/importers/etstore'
 import { withTransaction } from '@/importers/importOrder'
 import { idOf } from '@/ledger/rules'
 import { ensureInbox } from '@/importers/receiveOrder'
+import { type CatalogPart, catalogPart, readMediaFile } from '@/lib/catalog'
 import { formatValue } from '@/lib/format'
 import { parseValue } from '@/lib/searchQuery'
 import type { Part, User } from '@/payload-types'
@@ -18,6 +19,8 @@ export type NewPart = {
   /** Where the starting stock goes; INBOX when left out */
   location?: string
   note?: string
+  /** A shared part from another lab to copy: details, photos, datasheet and store links */
+  from?: string
 }
 
 /**
@@ -55,17 +58,25 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
   }
   checkMinStock(input.minStock)
   await refuseDuplicate(payload, user, name)
+  // Read on the server: only what the sharing lab exposes is ever copied
+  const source = input.from ? await catalogPart(payload, user, input.from) : null
+  if (input.from && !source) throw new Error('That part is no longer shared')
+  const shared = source?.part
 
   return withTransaction(
     payload,
     async (req) => {
-      const value = guessValue(name)
+      const value = shared?.value != null ? shared : guessValue(name)
       const part = await payload.create({
         collection: 'parts',
         data: {
           name,
-          package: input.package?.trim() || guessPackage(name) || undefined,
-          mpn: input.mpn?.trim() || undefined,
+          package: input.package?.trim() || shared?.package || guessPackage(name) || undefined,
+          mpn: input.mpn?.trim() || shared?.mpn || undefined,
+          manufacturer: shared?.manufacturer || undefined,
+          description: shared?.description || undefined,
+          kicadSymbol: shared?.kicadSymbol || undefined,
+          kicadFootprint: shared?.kicadFootprint || undefined,
           category: input.category || undefined,
           minStock: input.minStock,
           ...(value && {
@@ -76,6 +87,7 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
         overrideAccess: false,
         req,
       })
+      if (source) await copyAttachments(payload, req, part.id, source)
 
       if (input.quantity > 0) {
         const to = input.location || (await ensureInbox(req, idOf(part.lab)!))
@@ -97,6 +109,76 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
     },
     { ...user, collection: 'users' },
   )
+}
+
+/** Copies a shared part's photos, datasheet and store links onto a new part in this lab. */
+const copyAttachments = async (
+  payload: Payload,
+  req: PayloadRequest,
+  partId: string,
+  source: CatalogPart,
+) => {
+  const copy = async (mediaId: string, kind: 'image' | 'datasheet', alt: string | null) => {
+    const media = await payload.findByID({
+      collection: 'media',
+      id: mediaId,
+      depth: 0,
+      overrideAccess: true,
+      req,
+    })
+    const file = await readMediaFile(payload, media)
+    return payload.create({
+      collection: 'media',
+      data: { alt: alt ?? undefined, kind, part: partId },
+      file: {
+        data: file.data,
+        mimetype: file.mimeType,
+        name: file.filename,
+        size: file.data.length,
+      },
+      overrideAccess: false,
+      req,
+    })
+  }
+  for (const photo of source.photos) await copy(photo.id, 'image', photo.alt)
+  if (source.datasheet) {
+    const datasheet = await copy(source.datasheet.id, 'datasheet', `${source.part.name} datasheet`)
+    await payload.update({
+      collection: 'parts',
+      id: partId,
+      data: { datasheet: datasheet.id },
+      overrideAccess: false,
+      req,
+    })
+  }
+
+  for (const listing of source.listings) {
+    if (!listing.supplier) continue
+    // This lab may already know that store code from its own orders; keep its own link
+    const { totalDocs } = await payload.count({
+      collection: 'supplier-parts',
+      where: {
+        and: [{ supplier: { equals: listing.supplier.id } }, { sku: { equals: listing.sku } }],
+      },
+      overrideAccess: false,
+      req,
+    })
+    if (totalDocs > 0) continue
+    await payload.create({
+      collection: 'supplier-parts',
+      data: {
+        supplier: listing.supplier.id,
+        part: partId,
+        sku: listing.sku,
+        title: listing.title ?? undefined,
+        handle: listing.handle ?? undefined,
+        variantId: listing.variantId ?? undefined,
+        url: listing.url ?? undefined,
+      },
+      overrideAccess: false,
+      req,
+    })
+  }
 }
 
 export type PartEdit = {

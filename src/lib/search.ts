@@ -2,11 +2,10 @@ import type { Payload, Where } from 'payload'
 
 import type { User } from '@/payload-types'
 
-import { parseQuery } from './searchQuery'
+import { type ParsedQuery, parseQuery } from './searchQuery'
 
-/** Free-text + value + package search over parts, as the given user. */
-export const searchParts = async (payload: Payload, user: User, q: string, limit = 50) => {
-  const parsed = parseQuery(q)
+/** Conditions on parts for a parsed query; `skuParts` are the parts its store code matched. */
+export const partConditions = (parsed: ParsedQuery, skuParts: string[]): Where[] => {
   const and: Where[] = []
 
   if (parsed.value) {
@@ -17,16 +16,7 @@ export const searchParts = async (payload: Payload, user: User, q: string, limit
     and.push({ value: { less_than_equal: value + tolerance } })
   }
   if (parsed.package) and.push({ package: { like: parsed.package } })
-  if (parsed.sku) {
-    const { docs } = await payload.find({
-      collection: 'supplier-parts',
-      where: { sku: { equals: parsed.sku } },
-      depth: 0,
-      user,
-      overrideAccess: false,
-    })
-    and.push({ id: { in: docs.map((d) => d.part as string) } })
-  }
+  if (parsed.sku) and.push({ id: { in: skuParts } })
   for (const term of parsed.terms) {
     and.push({
       or: [
@@ -37,6 +27,24 @@ export const searchParts = async (payload: Payload, user: User, q: string, limit
       ],
     })
   }
+  return and
+}
+
+/** Free-text + value + package search over parts, as the given user. */
+export const searchParts = async (payload: Payload, user: User, q: string, limit = 50) => {
+  const parsed = parseQuery(q)
+  const skuParts = parsed.sku
+    ? (
+        await payload.find({
+          collection: 'supplier-parts',
+          where: { sku: { equals: parsed.sku } },
+          depth: 0,
+          user,
+          overrideAccess: false,
+        })
+      ).docs.map((d) => d.part as string)
+    : []
+  const and = partConditions(parsed, skuParts)
   if (and.length === 0) return []
 
   const { docs: parts } = await payload.find({
