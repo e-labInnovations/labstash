@@ -45,6 +45,7 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap"
   },
   "dependencies": {
+    "@dnd-kit/core": "6.3.1",
     "@payloadcms/db-vercel-postgres": "4.0.0-beta.6",
     "@payloadcms/next": "4.0.0-beta.6",
     "@payloadcms/plugin-mcp": "4.0.0-beta.6",

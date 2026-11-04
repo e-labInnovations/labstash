@@ -1,5 +1,21 @@
 'use client'
 
+import {
+  type CollisionDetection,
+  DndContext,
+  closestCenter,
+  pointerWithin,
+  type DragEndEvent,
+  DragOverlay,
+  KeyboardSensor,
+  MeasuringStrategy,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
 import React, { useCallback, useMemo, useState, useTransition } from 'react'
 
 import { type ActionState, removeCategory, saveCategory } from '@/app/(app)/actions'
@@ -48,45 +64,19 @@ export function CategoryManager({ rows, canEdit }: { rows: CategoryRow[]; canEdi
         {rows.length} categories, shared by every lab. Numbers are your parts in each.
       </p>
 
-      <ul className="overflow-hidden rounded-2xl border border-line bg-raised">
-        {shown.map((r) => {
-          const inner = (
-            <>
-              <span
-                className="min-w-0 flex-1 truncate"
-                style={{ paddingLeft: query ? 0 : `${r.depth * 1.25}rem` }}
-              >
-                {query ? r.label : r.name}
-              </span>
-              {r.parts > 0 && (
-                <span className="shrink-0 text-[15px] font-semibold text-muted">{r.parts}</span>
-              )}
-            </>
-          )
-          return (
-            <li key={r.id} className="border-b border-line last:border-0">
-              {canEdit ? (
-                <button
-                  type="button"
-                  onClick={() => setEditing({ mode: 'edit', row: r })}
-                  className="flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-surface"
-                >
-                  {inner}
-                  <Icon name="edit" className="size-4 shrink-0 text-muted" />
-                </button>
-              ) : (
-                <div className="flex min-h-12 items-center gap-3 px-4 py-2.5">{inner}</div>
-              )}
-            </li>
-          )
-        })}
-        {shown.length === 0 && <li className="px-4 py-6 text-center text-muted">No matches.</li>}
-      </ul>
-      {!canEdit && (
-        <p className="mt-3 text-[15px] text-muted">
-          Only the admin can rename, move or delete categories, since every lab shares them.
-        </p>
-      )}
+      <CategoryList
+        rows={shown}
+        all={rows}
+        flat={Boolean(query.trim())}
+        canEdit={canEdit}
+        onEdit={(row) => setEditing({ mode: 'edit', row })}
+        onMoved={setToast}
+      />
+      <p className="mt-3 text-[15px] text-muted">
+        {canEdit
+          ? 'Drag a category by its handle onto another to move it inside, or onto Top level. On a phone, press and hold the handle first.'
+          : 'Only the admin can rename, move or delete categories, since every lab shares them.'}
+      </p>
 
       <Sheet
         open={editing !== null}
@@ -189,5 +179,193 @@ function CategoryForm({
         </button>
       )}
     </form>
+  )
+}
+
+/** Every category below `id`, and `id` itself: where it can't be moved to. */
+const subtree = (all: CategoryRow[], id: string) => {
+  const below = new Set([id])
+  for (const r of all) if (r.parent && below.has(r.parent)) below.add(r.id)
+  return below
+}
+
+const TOP = 'top'
+
+/** Drop where the pointer is (finger or mouse); the keyboard has no pointer, so nearest. */
+const dropTarget: CollisionDetection = (args) =>
+  args.pointerCoordinates ? pointerWithin(args) : closestCenter(args)
+
+function CategoryList({
+  rows,
+  all,
+  flat,
+  canEdit,
+  onEdit,
+  onMoved,
+}: {
+  rows: CategoryRow[]
+  all: CategoryRow[]
+  /** Filtered: full paths, no indenting */
+  flat: boolean
+  canEdit: boolean
+  onEdit: (row: CategoryRow) => void
+  onMoved: (message: string) => void
+}) {
+  const [dragging, setDragging] = useState<CategoryRow | null>(null)
+  const [pending, startTransition] = useTransition()
+  // Mouse after a small move; touch after a press-and-hold so the page still scrolls
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    useSensor(KeyboardSensor),
+  )
+
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    setDragging(null)
+    const row = all.find((r) => r.id === active.id)
+    if (!row || !over) return
+    const parent = over.id === TOP ? null : String(over.id)
+    if (parent === row.parent) return
+    if (parent && subtree(all, row.id).has(parent)) {
+      onMoved('A category can’t go inside itself')
+      return
+    }
+    const data = new FormData()
+    data.set('id', row.id)
+    data.set('name', row.name)
+    if (parent) data.set('parent', parent)
+    const target = parent ? all.find((r) => r.id === parent)?.name : 'the top level'
+    startTransition(async () => {
+      const result = await saveCategory(null, data)
+      onMoved(result && 'error' in result ? result.error : `Moved “${row.name}” into ${target}`)
+    })
+  }
+
+  const list = (
+    <ul
+      className={`overflow-hidden rounded-2xl border border-line bg-raised ${pending ? 'opacity-60' : ''}`}
+    >
+      {rows.map((r) => (
+        <CategoryItem
+          key={r.id}
+          row={r}
+          flat={flat}
+          canEdit={canEdit}
+          blocked={dragging ? subtree(all, dragging.id).has(r.id) : false}
+          onEdit={() => onEdit(r)}
+        />
+      ))}
+      {rows.length === 0 && <li className="px-4 py-6 text-center text-muted">No matches.</li>}
+    </ul>
+  )
+  if (!canEdit) return list
+
+  return (
+    <DndContext
+      sensors={sensors}
+      // The Top level strip appears once dragging starts and shifts the list: keep measuring
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+      collisionDetection={dropTarget}
+      onDragStart={({ active }) => setDragging(all.find((r) => r.id === active.id) ?? null)}
+      onDragCancel={() => setDragging(null)}
+      onDragEnd={onDragEnd}
+    >
+      <TopLevelDrop visible={dragging !== null && dragging.parent !== null} />
+      {list}
+      <DragOverlay dropAnimation={null}>
+        {dragging && (
+          <div className="flex h-12 w-max max-w-72 items-center gap-2 rounded-xl border border-mask bg-raised px-4 font-semibold whitespace-nowrap shadow-lg">
+            <Icon name="tag" className="size-5 text-mask" />
+            {dragging.name}
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  )
+}
+
+function TopLevelDrop({ visible }: { visible: boolean }) {
+  const { setNodeRef, isOver } = useDroppable({ id: TOP, disabled: !visible })
+  if (!visible) return null
+  return (
+    <div
+      ref={setNodeRef}
+      className={`mb-2 flex h-12 items-center justify-center rounded-xl border-2 border-dashed font-semibold ${
+        isOver ? 'border-mask bg-mask-soft text-mask' : 'border-line text-muted'
+      }`}
+    >
+      Top level
+    </div>
+  )
+}
+
+function CategoryItem({
+  row,
+  flat,
+  canEdit,
+  blocked,
+  onEdit,
+}: {
+  row: CategoryRow
+  flat: boolean
+  canEdit: boolean
+  /** The category being dragged, or one inside it: not a place it can go */
+  blocked: boolean
+  onEdit: () => void
+}) {
+  const {
+    setNodeRef: handle,
+    listeners,
+    attributes,
+    isDragging,
+  } = useDraggable({ id: row.id, disabled: !canEdit })
+  const { setNodeRef: target, isOver } = useDroppable({ id: row.id, disabled: !canEdit || blocked })
+  const label = (
+    <>
+      <span
+        className="min-w-0 flex-1 truncate"
+        style={{ paddingLeft: flat ? 0 : `${row.depth * 1.25}rem` }}
+      >
+        {flat ? row.label : row.name}
+      </span>
+      {row.parts > 0 && (
+        <span className="shrink-0 text-[15px] font-semibold text-muted">{row.parts}</span>
+      )}
+    </>
+  )
+
+  if (!canEdit) {
+    return (
+      <li className="border-b border-line last:border-0">
+        <div className="flex min-h-12 items-center gap-3 px-4 py-2.5">{label}</div>
+      </li>
+    )
+  }
+  return (
+    <li
+      ref={target}
+      className={`flex items-center border-b border-line last:border-0 ${
+        isOver ? 'bg-mask-soft' : ''
+      } ${isDragging || blocked ? 'opacity-50' : ''}`}
+    >
+      <button
+        type="button"
+        ref={handle}
+        {...listeners}
+        {...attributes}
+        aria-label={`Move ${row.name}`}
+        className="grid h-12 w-10 shrink-0 cursor-grab touch-none place-items-center text-muted active:cursor-grabbing"
+      >
+        <Icon name="grip" className="size-5" />
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2.5 pr-4 text-left hover:bg-surface"
+      >
+        {label}
+        <Icon name="edit" className="size-4 shrink-0 text-muted" />
+      </button>
+    </li>
   )
 }
