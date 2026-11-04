@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
 import { addFile, addLink, fileKind, removeFile, removeLink } from '@/lib/attachments'
 import { createBox } from '@/lib/boxes'
+import { attempt } from '@/lib/result'
+import { importOrders, listOrders, previewOrders } from '@/lib/stores/import'
 import { updateLab } from '@/lib/labSettings'
 import { setShared } from '@/lib/catalog'
 import { createPart, updatePart } from '@/lib/parts'
@@ -305,4 +307,22 @@ export async function saveLab(_: ActionState, form: FormData): Promise<ActionSta
   }
   revalidatePath('/', 'layout')
   return { ok: 'Lab saved' }
+}
+
+/** ETstore orders on the account the key belongs to. The key is never stored. */
+export async function storeOrders(key: string) {
+  const { payload, user } = await requireSession()
+  return attempt(() => listOrders(payload, user, key))
+}
+
+export async function storePreview(key: string, ids: string[]) {
+  const { payload, user } = await requireSession()
+  return attempt(() => previewOrders(payload, user, key, ids))
+}
+
+export async function storeImport(key: string, ids: string[]) {
+  const { payload, user } = await requireSession()
+  const result = await attempt(() => importOrders(payload, user, key, ids))
+  if (result.ok) revalidatePath('/', 'layout')
+  return result
 }

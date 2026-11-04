@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import React from 'react'
 
-import { Empty, PageHeader, Section } from '@/components/ui'
+import { Icon } from '@/components/Icon'
+import { Empty, Section } from '@/components/ui'
 import { openPurchases } from '@/lib/queries'
 import { requireSession } from '@/lib/session'
 import type { Purchase, Supplier } from '@/payload-types'
@@ -23,9 +24,20 @@ export default async function OrdersPage() {
 
   return (
     <>
-      <PageHeader title="Orders" />
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1 className="text-[28px] leading-tight font-semibold tracking-tight lg:text-[34px]">
+          Orders
+        </h1>
+        <Link
+          href="/orders/import"
+          className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-4 font-semibold whitespace-nowrap text-mask-ink"
+        >
+          <Icon name="plus" className="size-5" />
+          Import
+        </Link>
+      </div>
       {purchases.length === 0 ? (
-        <Empty>No orders yet. Import one with npm run import:etstore.</Empty>
+        <Empty>No orders yet. Use Import to bring in your ETstore orders.</Empty>
       ) : (
         <>
           {open.length > 0 ? (
