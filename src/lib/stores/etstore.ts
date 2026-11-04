@@ -83,6 +83,17 @@ export const listEtstoreOrders = async (key: string): Promise<StoreOrderSummary[
 /** "… ET7489" → ET7489: the store code ends every ETstore title. */
 const CODE = /\b(ET[A-Z]?\d{3,})\s*$/i
 
+/**
+ * The ET code a title ends with. Some titles drop the "ET" ("… Switches A2031"); when that
+ * bare code is the item's own SKU, it is the same product code (A2031 → ETA2031).
+ */
+export const storeCode = (title: string, sku: string | null) => {
+  const full = title.match(CODE)?.[1]?.toUpperCase()
+  if (full) return full
+  const bare = title.match(/\b([A-Z]?\d{3,})\s*$/i)?.[1]?.toUpperCase()
+  return bare && sku && bare === sku.toUpperCase() ? `ET${bare}` : null
+}
+
 /** One order, shaped like the order files the importer reads. */
 export const fetchEtstoreOrder = async (key: string, id: string): Promise<EtstoreOrderFile> => {
   const data = await ask<{
@@ -129,7 +140,7 @@ export const fetchEtstoreOrder = async (key: string, id: string): Promise<Etstor
     },
     items: o.lineItems.nodes.map((l) => ({
       title: l.title,
-      etCode: l.title.match(CODE)?.[1]?.toUpperCase() ?? null,
+      etCode: storeCode(l.title, l.sku),
       // The product handle is the variant SKU in lower case (ET7489 sells as G7489 → g7489)
       handle: l.sku ? l.sku.toLowerCase() : null,
       variantGid: l.variantId ?? '',
