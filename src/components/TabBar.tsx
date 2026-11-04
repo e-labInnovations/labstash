@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 
 import { BoxMark } from './BoxMark'
-import { LabBadge } from './LabBadge'
+import { LabLogo } from './LabBadge'
 import { Icon, type IconName } from './Icon'
 
 const tabs: Array<{ href: string; label: string; icon: IconName; match: RegExp }> = [
@@ -100,12 +100,18 @@ export function Sidebar({
         <span className="text-[22px] font-semibold tracking-tight">LabStash</span>
       </Link>
       {lab ? (
+        // The lab you are in, as a card that opens its settings
         <Link
           href="/lab"
           aria-current={pathname === '/lab' ? 'page' : undefined}
-          className="mt-2 mb-6 ml-14 flex min-w-0 items-center rounded-lg py-1 text-[15px] font-semibold text-muted hover:text-ink aria-[current=page]:text-mask"
+          className="mt-5 mb-5 flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 hover:border-mask aria-[current=page]:border-mask"
         >
-          <LabBadge name={lab.name} logo={lab.logo} />
+          <LabLogo name={lab.name} logo={lab.logo} size="md" />
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block text-[13px] text-muted">Lab</span>
+            <span className="line-clamp-2 font-semibold break-words">{lab.name}</span>
+          </span>
+          <Icon name="back" className="size-4 shrink-0 rotate-180 text-muted" />
         </Link>
       ) : (
         <div className="mb-6" />
