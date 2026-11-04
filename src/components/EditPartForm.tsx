@@ -18,6 +18,8 @@ export type EditablePart = {
   category: string
   minStock: string
   notes: string
+  kicadSymbol: string
+  kicadFootprint: string
 }
 
 /** Everything about a part except how many there are; stock changes go through the ledger. */
@@ -110,6 +112,32 @@ export function EditPartForm({
           className={inputClass}
         />
       </Field>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="KiCad symbol">
+          <input
+            name="kicadSymbol"
+            defaultValue={part.kicadSymbol}
+            placeholder="Device:R"
+            autoComplete="off"
+            spellCheck={false}
+            className={`${inputClass} font-mono`}
+          />
+        </Field>
+        <Field label="KiCad footprint">
+          <input
+            name="kicadFootprint"
+            defaultValue={part.kicadFootprint}
+            placeholder="Resistor_SMD:R_0603_1608Metric"
+            autoComplete="off"
+            spellCheck={false}
+            className={`${inputClass} font-mono`}
+          />
+        </Field>
+      </div>
+      <p className="-mt-3 text-[15px] text-muted">
+        Library names. Add the files themselves under Files and links on the part.
+      </p>
 
       <Field label="Notes">
         <textarea

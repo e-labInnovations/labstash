@@ -36,6 +36,19 @@ export const labs = multiTenantPlugin({
     arrayTenantFieldName: 'lab',
     arrayFieldAccess: { create: adminOnlyField, update: adminOnlyField },
     tenantFieldAccess: { create: adminOnlyField, update: adminOnlyField },
+    rowFields: [
+      {
+        // Most labs are one person, who runs it; extra people can be plain members
+        name: 'labRole',
+        type: 'select',
+        defaultValue: 'admin',
+        options: [
+          { label: 'Lab admin — can change the lab’s name, logo and theme', value: 'admin' },
+          { label: 'Member', value: 'member' },
+        ],
+        access: { create: adminOnlyField, update: adminOnlyField },
+      },
+    ],
   },
   userHasAccessToAllTenants: isAdmin,
   i18n: {

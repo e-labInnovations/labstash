@@ -124,7 +124,8 @@ describe('shared catalog', () => {
     ])
     expect(Object.keys(shared.listings[0].supplier!).sort()).toEqual(['id', 'name'])
     expect(shared.photos).toHaveLength(1)
-    expect(shared.datasheet).not.toBeNull()
+    expect(shared.files.map((f) => f.kind)).toEqual(['datasheet'])
+    expect(shared.datasheetId).toBe(datasheet)
     // The files are served only because the part is shared
     const media = (await sharedMedia(payload, photo))!
     expect((await readMediaFile(payload, media, 'thumbnail')).mimeType).toBe('image/png')

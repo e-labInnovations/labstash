@@ -98,6 +98,21 @@ export const Parts: CollectionConfig = {
         { name: 'model3d', type: 'upload', relationTo: 'media', label: '3D model' },
         { name: 'kicadSymbol', type: 'text', admin: { description: 'Library:Symbol' } },
         { name: 'kicadFootprint', type: 'text', admin: { description: 'Library:Footprint' } },
+        {
+          // Files live on media records pointing here (media.part, with a kind); links here
+          name: 'links',
+          type: 'array',
+          admin: { description: 'Datasheet URLs, product pages, library downloads…' },
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                { name: 'label', type: 'text', required: true },
+                { name: 'url', type: 'text', required: true },
+              ],
+            },
+          ],
+        },
       ],
     },
     {

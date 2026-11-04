@@ -5,10 +5,16 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 
 import { BoxMark } from './BoxMark'
+import { LabBadge } from './LabBadge'
 import { Icon, type IconName } from './Icon'
 
 const tabs: Array<{ href: string; label: string; icon: IconName; match: RegExp }> = [
-  { href: '/', label: 'Home', icon: 'home', match: /^\/($|search|parts|low-stock|catalog)/ },
+  {
+    href: '/',
+    label: 'Home',
+    icon: 'home',
+    match: /^\/($|search|parts|low-stock|catalog|lab(\/|$))/,
+  },
   { href: '/locations', label: 'Boxes', icon: 'box', match: /^\/(locations|l\/|labels|share)/ },
   { href: '/scan', label: 'Scan', icon: 'scan', match: /^\/scan/ },
   { href: '/inbox', label: 'Inbox', icon: 'inbox', match: /^\/inbox/ },
@@ -75,14 +81,35 @@ export function TabBar({ inboxCount }: { inboxCount: number }) {
 }
 
 /** Desktop: the same destinations as a left rail, with search always in reach. */
-export function Sidebar({ inboxCount, search }: { inboxCount: number; search: React.ReactNode }) {
+export function Sidebar({
+  inboxCount,
+  search,
+  lab,
+  isAdmin,
+}: {
+  inboxCount: number
+  search: React.ReactNode
+  lab: { name: string; logo: string | null } | null
+  isAdmin: boolean
+}) {
   const pathname = usePathname()
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-line bg-raised px-4 py-6 lg:flex">
-      <Link href="/" className="mb-6 flex items-center gap-3 px-2">
+      <Link href="/" className="flex items-center gap-3 px-2">
         <BoxMark className="size-9" />
         <span className="text-[22px] font-semibold tracking-tight">LabStash</span>
       </Link>
+      {lab ? (
+        <Link
+          href="/lab"
+          aria-current={pathname === '/lab' ? 'page' : undefined}
+          className="mt-2 mb-6 ml-14 flex min-w-0 items-center rounded-lg py-1 text-[15px] font-semibold text-muted hover:text-ink aria-[current=page]:text-mask"
+        >
+          <LabBadge name={lab.name} logo={lab.logo} />
+        </Link>
+      ) : (
+        <div className="mb-6" />
+      )}
       {/* Home has its own big search field */}
       {pathname !== '/' && <div className="mb-5">{search}</div>}
       <nav aria-label="Main">
@@ -111,12 +138,14 @@ export function Sidebar({ inboxCount, search }: { inboxCount: number; search: Re
           })}
         </ul>
       </nav>
-      <Link
-        href="/admin"
-        className="mt-auto flex h-11 items-center rounded-xl px-3 text-[15px] text-muted hover:bg-surface hover:text-ink"
-      >
-        Admin panel
-      </Link>
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="mt-auto flex h-11 items-center rounded-xl px-3 text-[15px] text-muted hover:bg-surface hover:text-ink"
+        >
+          Admin panel
+        </Link>
+      )}
     </aside>
   )
 }

@@ -6,8 +6,10 @@ import { AddPhoto } from '@/components/AddPhoto'
 import { ShareButton } from '@/components/ShareButton'
 import { Icon } from '@/components/Icon'
 import { PartActions } from '@/components/PartActions'
+import { PartFiles } from '@/components/PartFiles'
 import { PhotoGallery } from '@/components/PhotoGallery'
-import { ExternalRow, PageHeader, Quantity, Section } from '@/components/ui'
+import { PageHeader, Quantity, Section } from '@/components/ui'
+import { partFiles, toPartFile } from '@/lib/attachments'
 import { formatValue } from '@/lib/format'
 import { allLocations, partDetail } from '@/lib/queries'
 import { requireSession } from '@/lib/session'
@@ -16,9 +18,10 @@ import type { Category, Media } from '@/payload-types'
 export default async function PartPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { payload, user } = await requireSession()
-  const [detail, locations] = await Promise.all([
+  const [detail, locations, files] = await Promise.all([
     partDetail(payload, user, id),
     allLocations(payload, user),
+    partFiles(payload, user, id),
   ])
   if (!detail) notFound()
   const { part, stock, sources, photos } = detail
@@ -112,20 +115,22 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
             )}
           </Section>
 
-          {(datasheet?.url || sources.length > 0) && (
-            <Section title="Buy and docs">
-              <ul className="flex flex-col gap-2">
-                {datasheet?.url && <ExternalRow href={datasheet.url} label="Datasheet" />}
-                {sources.map((s) => (
-                  <ExternalRow
-                    key={s.id}
-                    href={s.url ?? undefined}
-                    label={`${s.supplier} ${s.sku}`}
-                  />
-                ))}
-              </ul>
-            </Section>
-          )}
+          <PartFiles
+            part={part.id}
+            files={
+              // A datasheet set on the part but not filed against it still belongs here
+              datasheet && !files.some((f) => f.id === datasheet.id)
+                ? [toPartFile({ ...datasheet, kind: 'datasheet' }), ...files]
+                : files
+            }
+            links={(part.links ?? []).map((l) => ({ id: l.id!, label: l.label, url: l.url }))}
+            stores={sources.map((s) => ({
+              key: s.id,
+              label: `${s.supplier} ${s.sku}`,
+              url: s.url,
+            }))}
+            kicad={{ symbol: part.kicadSymbol, footprint: part.kicadFootprint }}
+          />
 
           {part.notes && (
             <Section title="Notes">

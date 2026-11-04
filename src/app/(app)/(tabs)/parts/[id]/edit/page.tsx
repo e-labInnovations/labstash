@@ -35,6 +35,8 @@ export default async function EditPartPage({ params }: { params: Promise<{ id: s
           category: typeof part.category === 'string' ? part.category : (part.category?.id ?? ''),
           minStock: part.minStock == null ? '' : String(part.minStock),
           notes: part.notes ?? '',
+          kicadSymbol: part.kicadSymbol ?? '',
+          kicadFootprint: part.kicadFootprint ?? '',
         }}
       />
     </>

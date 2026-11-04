@@ -4,40 +4,52 @@ import React from 'react'
 import { Icon } from '@/components/Icon'
 import { PartRow, SearchBar, Section } from '@/components/ui'
 import { homeStats, lowStockParts, recentMovements } from '@/lib/queries'
-import { requireSession } from '@/lib/session'
+import { LabBadge } from '@/components/LabBadge'
+import { getLab, requireSession } from '@/lib/session'
 import type { StockMovement } from '@/payload-types'
 
 export default async function HomePage() {
   const { payload, user } = await requireSession()
-  const [stats, recent, low] = await Promise.all([
+  const [stats, recent, low, lab] = await Promise.all([
     homeStats(payload, user),
     recentMovements(payload, user, 10),
     lowStockParts(payload, user),
+    getLab(),
   ])
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between lg:mb-6">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-[28px] font-semibold tracking-tight lg:text-[34px]">
           <span className="lg:hidden">LabStash</span>
           <span className="hidden lg:inline">Your stash</span>
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 lg:gap-3">
           <Link
             href="/parts"
-            className="flex h-11 items-center rounded-xl border border-line px-4 font-semibold"
+            className="flex h-11 items-center rounded-xl border border-line px-3 font-semibold whitespace-nowrap lg:px-4"
           >
-            {stats.parts} parts
+            {stats.parts} {stats.parts === 1 ? 'part' : 'parts'}
           </Link>
           <Link
             href="/parts/new"
-            className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-4 font-semibold text-mask-ink"
+            className="flex h-11 items-center gap-1.5 rounded-xl bg-mask px-3 font-semibold whitespace-nowrap text-mask-ink lg:px-4"
           >
             <Icon name="plus" className="size-5" />
             Add part
           </Link>
         </div>
       </div>
+      {/* Phones have no sidebar, so the lab shows here */}
+      {lab && (
+        <Link
+          href="/lab"
+          className="mt-1 flex min-w-0 text-[15px] font-semibold text-muted lg:hidden"
+        >
+          <LabBadge name={lab.name} logo={lab.logo?.thumb ?? null} />
+        </Link>
+      )}
+      <div className="mb-4 lg:mb-6" />
       <SearchBar />
 
       <div className="mt-4 grid grid-cols-3 gap-2 lg:gap-4">

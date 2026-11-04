@@ -4,7 +4,8 @@ import React from 'react'
 
 import { Icon } from '@/components/Icon'
 import { PhotoGallery } from '@/components/PhotoGallery'
-import { ExternalRow, PageHeader, Section } from '@/components/ui'
+import { PartFiles } from '@/components/PartFiles'
+import { PageHeader, Section } from '@/components/ui'
 import { catalogPart } from '@/lib/catalog'
 import { formatValue } from '@/lib/format'
 import { requireSession } from '@/lib/session'
@@ -17,7 +18,7 @@ export default async function CatalogPartPage({ params }: { params: Promise<{ id
   const { payload, user } = await requireSession()
   const shared = await catalogPart(payload, user, id)
   if (!shared) notFound()
-  const { part, category, photos, datasheet, listings } = shared
+  const { part, category, photos, files, listings } = shared
 
   // Already have one by that name? Point there instead of making a duplicate
   const { docs: mine } = await payload.find({
@@ -70,8 +71,8 @@ export default async function CatalogPartPage({ params }: { params: Promise<{ id
             </Link>
           )}
           <p className="mt-2 text-[14px] text-muted">
-            Copies the details, photos, datasheet and store links. How many you have and where they
-            go are yours to fill in.
+            Copies the details, photos, files, links and store links. How many you have and where
+            they go are yours to fill in.
           </p>
         </aside>
 
@@ -92,20 +93,17 @@ export default async function CatalogPartPage({ params }: { params: Promise<{ id
               {part.description && <p className="mt-3 whitespace-pre-line">{part.description}</p>}
             </Section>
           )}
-          {(datasheet || listings.length > 0) && (
-            <Section title="Buy and docs">
-              <ul className="flex flex-col gap-2">
-                {datasheet && <ExternalRow href={datasheet.url} label="Datasheet" />}
-                {listings.map((l) => (
-                  <ExternalRow
-                    key={`${l.supplier?.id}-${l.sku}`}
-                    href={l.url ?? undefined}
-                    label={`${l.supplier?.name ?? 'Store'} ${l.sku}`}
-                  />
-                ))}
-              </ul>
-            </Section>
-          )}
+          <PartFiles
+            part={part.id}
+            readOnly
+            files={files}
+            links={(part.links ?? []).map((l) => ({ id: l.id!, label: l.label, url: l.url }))}
+            stores={listings.map((l) => ({
+              key: `${l.supplier?.id}-${l.sku}`,
+              label: `${l.supplier?.name ?? 'Store'} ${l.sku}`,
+              url: l.url,
+            }))}
+          />
         </div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import { labsOf } from '@/access'
 import { idOf } from '@/ledger/rules'
 import type { Media, Part, User } from '@/payload-types'
 
+import { byKind, toPartFile } from './attachments'
+
 import { partConditions } from './search'
 import { parseQuery } from './searchQuery'
 
@@ -25,6 +27,7 @@ const SHARED_FIELDS = {
   datasheet: true,
   kicadSymbol: true,
   kicadFootprint: true,
+  links: true,
 } as const
 
 type SharedPart = Pick<Part, 'id' | keyof typeof SHARED_FIELDS>
@@ -121,24 +124,27 @@ export const catalogPart = async (payload: Payload, user: User, id: string) => {
   if (!part) return null
 
   const categoryId = idOf(part.category)
-  const [category, images, datasheet, listings] = await Promise.all([
+  const datasheetId = idOf(part.datasheet)
+  const [category, images, files, listings] = await Promise.all([
     categoryId
       ? payload
           .findByID({ collection: 'categories', id: categoryId, depth: 0, overrideAccess: true })
           .catch(() => null)
       : null,
     imagesOf(payload, [id]),
-    idOf(part.datasheet)
-      ? payload
-          .findByID({
-            collection: 'media',
-            id: idOf(part.datasheet)!,
-            depth: 0,
-            select: { filename: true },
-            overrideAccess: true,
-          })
-          .catch(() => null)
-      : null,
+    // Datasheets, KiCad files, 3D models…, plus the part's datasheet if it isn't filed under it
+    payload.find({
+      collection: 'media',
+      where: {
+        or: [
+          { and: [{ part: { equals: id } }, { kind: { not_equals: 'image' } }] },
+          ...(datasheetId ? [{ id: { equals: datasheetId } }] : []),
+        ],
+      },
+      pagination: false,
+      depth: 0,
+      overrideAccess: true,
+    }),
     payload.find({
       collection: 'supplier-parts',
       where: { part: { equals: id } },
@@ -164,7 +170,15 @@ export const catalogPart = async (payload: Payload, user: User, id: string) => {
       url: catalogFileUrl(m.id),
       thumb: catalogFileUrl(m.id, 'thumbnail'),
     })),
-    datasheet: datasheet ? { id: datasheet.id, url: catalogFileUrl(datasheet.id) } : null,
+    files: files.docs
+      .map((m) =>
+        toPartFile(
+          { ...m, kind: m.id === datasheetId ? 'datasheet' : m.kind },
+          catalogFileUrl(m.id),
+        ),
+      )
+      .sort(byKind),
+    datasheetId,
     listings: listings.docs.map((l) => ({
       supplier: typeof l.supplier === 'object' ? l.supplier : null,
       sku: l.sku,

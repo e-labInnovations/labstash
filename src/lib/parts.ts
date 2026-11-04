@@ -7,7 +7,7 @@ import { ensureInbox } from '@/importers/receiveOrder'
 import { type CatalogPart, catalogPart, readMediaFile } from '@/lib/catalog'
 import { formatValue } from '@/lib/format'
 import { parseValue } from '@/lib/searchQuery'
-import type { Part, User } from '@/payload-types'
+import type { Media, Part, User } from '@/payload-types'
 
 export type NewPart = {
   name: string
@@ -77,6 +77,7 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
           description: shared?.description || undefined,
           kicadSymbol: shared?.kicadSymbol || undefined,
           kicadFootprint: shared?.kicadFootprint || undefined,
+          links: shared?.links?.map(({ label, url }) => ({ label, url })) ?? undefined,
           category: input.category || undefined,
           minStock: input.minStock,
           ...(value && {
@@ -111,14 +112,14 @@ export const createPart = async (payload: Payload, user: User, input: NewPart) =
   )
 }
 
-/** Copies a shared part's photos, datasheet and store links onto a new part in this lab. */
+/** Copies a shared part's photos, files (datasheet, KiCad, 3D…) and store links into this lab. */
 const copyAttachments = async (
   payload: Payload,
   req: PayloadRequest,
   partId: string,
   source: CatalogPart,
 ) => {
-  const copy = async (mediaId: string, kind: 'image' | 'datasheet', alt: string | null) => {
+  const copy = async (mediaId: string, kind: Media['kind'], alt: string | null) => {
     const media = await payload.findByID({
       collection: 'media',
       id: mediaId,
@@ -141,15 +142,17 @@ const copyAttachments = async (
     })
   }
   for (const photo of source.photos) await copy(photo.id, 'image', photo.alt)
-  if (source.datasheet) {
-    const datasheet = await copy(source.datasheet.id, 'datasheet', `${source.part.name} datasheet`)
-    await payload.update({
-      collection: 'parts',
-      id: partId,
-      data: { datasheet: datasheet.id },
-      overrideAccess: false,
-      req,
-    })
+  for (const file of source.files) {
+    const copied = await copy(file.id, file.kind, file.filename)
+    if (file.id === source.datasheetId) {
+      await payload.update({
+        collection: 'parts',
+        id: partId,
+        data: { datasheet: copied.id },
+        overrideAccess: false,
+        req,
+      })
+    }
   }
 
   for (const listing of source.listings) {
@@ -191,6 +194,9 @@ export type PartEdit = {
   category?: string
   minStock?: number | null
   notes?: string
+  /** KiCad library references, e.g. Device:R and Resistor_SMD:R_0603_1608Metric */
+  kicadSymbol?: string
+  kicadFootprint?: string
 }
 
 /** Updates a part's description. Stock stays with the ledger and is never touched here. */
@@ -232,6 +238,8 @@ export const updatePart = async (payload: Payload, user: User, id: string, input
       category: input.category || null,
       minStock: input.minStock ?? null,
       notes: blank(input.notes),
+      kicadSymbol: blank(input.kicadSymbol),
+      kicadFootprint: blank(input.kicadFootprint),
     },
     user,
     overrideAccess: false,

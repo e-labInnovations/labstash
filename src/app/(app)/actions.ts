@@ -3,11 +3,13 @@
 import { revalidatePath } from 'next/cache'
 
 import { receiveLines, type LineReceipts } from '@/importers/receiveOrder'
+import { addFile, addLink, fileKind, removeFile, removeLink } from '@/lib/attachments'
 import { createBox } from '@/lib/boxes'
+import { updateLab } from '@/lib/labSettings'
 import { setShared } from '@/lib/catalog'
 import { createPart, updatePart } from '@/lib/parts'
 import { putAwayAll } from '@/lib/putAway'
-import { requireSession } from '@/lib/session'
+import { getLab, requireSession } from '@/lib/session'
 
 export type ActionState = { ok: string } | { error: string } | null
 
@@ -134,6 +136,8 @@ export async function editPart(_: ActionState, form: FormData): Promise<ActionSt
       category: str(form.get('category')),
       minStock: minStock === undefined ? null : Number(minStock),
       notes: str(form.get('notes')),
+      kicadSymbol: str(form.get('kicadSymbol')),
+      kicadFootprint: str(form.get('kicadFootprint')),
     })
   } catch (e) {
     return { error: message(e) }
@@ -209,4 +213,96 @@ export async function shareParts(_: ActionState, form: FormData): Promise<Action
   } catch (e) {
     return { error: message(e) }
   }
+}
+
+/** A datasheet, KiCad file, 3D model or other file for a part. */
+export async function addPartFile(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const file = form.get('file')
+  const part = str(form.get('part'))
+  const kind = fileKind(form.get('kind'))
+  if (!(file instanceof File) || file.size === 0) return { error: 'Pick a file first' }
+  if (!part || !kind) return { error: 'Pick what kind of file it is' }
+  try {
+    await addFile(payload, user, {
+      part,
+      kind,
+      file: {
+        data: Buffer.from(await file.arrayBuffer()),
+        mimetype: file.type || 'application/octet-stream',
+        name: file.name,
+      },
+    })
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'File added' }
+}
+
+export async function removePartFile(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const id = str(form.get('id'))
+  if (!id) return { error: 'File not found' }
+  try {
+    await removeFile(payload, user, id)
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'File removed' }
+}
+
+export async function addPartLink(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const part = str(form.get('part'))
+  if (!part) return { error: 'Part not found' }
+  try {
+    await addLink(payload, user, {
+      part,
+      label: str(form.get('label')) ?? '',
+      url: str(form.get('url')) ?? '',
+    })
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'Link added' }
+}
+
+export async function removePartLink(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const part = str(form.get('part'))
+  const link = str(form.get('link'))
+  if (!part || !link) return { error: 'Link not found' }
+  try {
+    await removeLink(payload, user, part, link)
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'Link removed' }
+}
+
+/** The lab's name, theme and logo (lab admins). */
+export async function saveLab(_: ActionState, form: FormData): Promise<ActionState> {
+  const { payload, user } = await requireSession()
+  const lab = await getLab()
+  if (!lab) return { error: 'Lab not found' }
+  const logo = form.get('logo')
+  try {
+    await updateLab(payload, user, lab.id, {
+      name: str(form.get('name')) ?? '',
+      theme: str(form.get('theme')) ?? '',
+      logo:
+        logo instanceof File && logo.size > 0
+          ? { data: Buffer.from(await logo.arrayBuffer()), mimetype: logo.type, name: logo.name }
+          : undefined,
+      removeLogo: form.get('removeLogo') === '1',
+    })
+  } catch (e) {
+    return { error: message(e) }
+  }
+  revalidatePath('/', 'layout')
+  return { ok: 'Lab saved' }
 }

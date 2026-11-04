@@ -33,6 +33,119 @@
   }
 }
 
+/* Lab themes: other solder mask colours (green above is the default). Set on <html> from the lab. */
+[data-theme='blue'] {
+  --surface: #f4f6f9;
+  --raised: #ffffff;
+  --ink: #1a2433;
+  --muted: #5a6678;
+  --line: #d4dce7;
+  --mask: #1d4f91;
+  --mask-ink: #f4f6f9;
+  --mask-soft: #e2eaf5;
+}
+
+[data-theme='purple'] {
+  --surface: #f7f5f9;
+  --raised: #ffffff;
+  --ink: #2a1f33;
+  --muted: #6c5f78;
+  --line: #ddd5e4;
+  --mask: #5b2d82;
+  --mask-ink: #f7f5f9;
+  --mask-soft: #ece4f3;
+}
+
+[data-theme='red'] {
+  --surface: #f9f5f4;
+  --raised: #ffffff;
+  --ink: #33201e;
+  --muted: #7a605d;
+  --line: #e6d6d3;
+  --mask: #9b2a24;
+  --mask-ink: #f9f5f4;
+  --mask-soft: #f5e3e1;
+}
+
+[data-theme='black'] {
+  --surface: #f4f5f5;
+  --raised: #ffffff;
+  --ink: #1b1e1d;
+  --muted: #626866;
+  --line: #d7dad9;
+  --mask: #232826;
+  --mask-ink: #f4f5f5;
+  --mask-soft: #e5e7e6;
+}
+
+[data-theme='white'] {
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --ink: #1c1f1e;
+  --muted: #616664;
+  --line: #dfe3e1;
+  --mask: #3a3f3d;
+  --mask-ink: #ffffff;
+  --mask-soft: #eef1ef;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='blue'] {
+    --surface: #0d1420;
+    --raised: #142033;
+    --ink: #e3eaf4;
+    --muted: #93a3b8;
+    --line: #24324a;
+    --mask: #7fb0ef;
+    --mask-ink: #0d1420;
+    --mask-soft: #18294a;
+  }
+
+  [data-theme='purple'] {
+    --surface: #150f1c;
+    --raised: #1f1729;
+    --ink: #ece4f3;
+    --muted: #a796b8;
+    --line: #33263f;
+    --mask: #c49be8;
+    --mask-ink: #150f1c;
+    --mask-soft: #2e1f40;
+  }
+
+  [data-theme='red'] {
+    --surface: #1a0f0e;
+    --raised: #261716;
+    --ink: #f4e5e3;
+    --muted: #b89a96;
+    --line: #3f2724;
+    --mask: #f08c80;
+    --mask-ink: #1a0f0e;
+    --mask-soft: #3d1e1b;
+  }
+
+  [data-theme='black'] {
+    --surface: #0b0c0c;
+    --raised: #151717;
+    --ink: #e8eaea;
+    --muted: #9aa09e;
+    --line: #2a2e2d;
+    --mask: #d9dedc;
+    --mask-ink: #0b0c0c;
+    --mask-soft: #232726;
+  }
+
+  [data-theme='white'] {
+    --surface: #1c1f1e;
+    --raised: #252928;
+    --ink: #f2f4f3;
+    --muted: #a6aca9;
+    --line: #363b39;
+    --mask: #f2f4f3;
+    --mask-ink: #1c1f1e;
+    --mask-soft: #323735;
+  }
+}
+
 @theme inline {
   --color-surface: var(--surface);
   --color-raised: var(--raised);

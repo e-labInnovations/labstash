@@ -10,7 +10,7 @@ import { Toast } from './Toast'
 const MAX_EDGE = 1600
 
 /** Phone photos are 3–12 MB; a 1600 px JPEG is a few hundred kB and plenty for a part. */
-const shrink = async (file: File): Promise<Blob> => {
+export const shrink = async (file: File): Promise<Blob> => {
   try {
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
     const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height))

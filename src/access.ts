@@ -33,6 +33,18 @@ export const isAdmin = (user: unknown): boolean => {
 export const adminOnly: Access = ({ req }) => isAdmin(req.user)
 export const adminOnlyField: FieldAccess = ({ req }) => isAdmin(req.user)
 
+/** Labs whose settings the user may change: all for the admin, else where they are lab admin. */
+export const managedLabs = (user: unknown): string[] | 'all' => {
+  const u = user as
+    (SessionUser & { labs?: Array<{ lab: unknown; labRole?: string | null }> }) | null
+  if (u?.collection === 'users' && u.role === 'admin') return 'all'
+  return (u?.labs ?? [])
+    .filter((row) => row.labRole === 'admin')
+    .map((row) =>
+      String(typeof row.lab === 'object' && row.lab ? (row.lab as { id: string }).id : row.lab),
+    )
+}
+
 /** The labs the user belongs to (one today; the field allows sharing a lab later). */
 export const labsOf = (user: unknown): string[] =>
   getUserTenantIDs(user as never, {

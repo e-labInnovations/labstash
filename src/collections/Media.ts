@@ -25,8 +25,9 @@ export const Media: CollectionConfig = {
       options: [
         { label: 'Image', value: 'image' },
         { label: 'Datasheet', value: 'datasheet' },
+        { label: 'KiCad symbol', value: 'symbol' },
+        { label: 'KiCad footprint', value: 'footprint' },
         { label: '3D model', value: 'model3d' },
-        { label: 'KiCad', value: 'kicad' },
         { label: 'Other', value: 'other' },
       ],
     },

@@ -206,6 +206,16 @@ export interface Part {
    * Library:Footprint
    */
   kicadFootprint?: string | null;
+  /**
+   * Datasheet URLs, product pages, library downloads…
+   */
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   notes?: string | null;
   /**
    * Other labs can find this part and copy its details, photos, datasheet and store links. Never quantities, boxes, orders or notes.
@@ -244,6 +254,8 @@ export interface Part {
 export interface Lab {
   id: string;
   name: string;
+  theme?: ('green' | 'blue' | 'purple' | 'red' | 'black' | 'white') | null;
+  logo?: (string | null) | Media;
   createdBy?: {
     relationTo: 'users';
     value: string | User;
@@ -254,98 +266,6 @@ export interface Lab {
   } | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  role: 'admin' | 'user';
-  labs?:
-    | {
-        lab: string | Lab;
-        id?: string | null;
-      }[]
-    | null;
-  createdBy?: {
-    relationTo: 'users';
-    value: string | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: string | User;
-  } | null;
-  updatedAt: string;
-  createdAt: string;
-  apiKey?: string | null;
-  apiKeyLast4?: string | null;
-  apiKeyIndex?: string | null;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: string;
-  name: string;
-  parent?: (string | null) | Category;
-  breadcrumbs?:
-    | {
-        doc?: (string | null) | Category;
-        url?: string | null;
-        label?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  createdBy?: {
-    relationTo: 'users';
-    value: string | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: string | User;
-  } | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: string;
-  _h_tags?: (string | null) | Tag;
-  name: string;
-  createdBy?: {
-    relationTo: 'users';
-    value: string | User;
-  } | null;
-  updatedBy?: {
-    relationTo: 'users';
-    value: string | User;
-  } | null;
-  updatedAt: string;
-  createdAt: string;
-  _h_slugPath?: string | null;
-  _h_titlePath?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -355,7 +275,7 @@ export interface Media {
   id: string;
   lab?: (string | null) | Lab;
   alt?: string | null;
-  kind?: ('image' | 'datasheet' | 'model3d' | 'kicad' | 'other') | null;
+  kind?: ('image' | 'datasheet' | 'symbol' | 'footprint' | 'model3d' | 'other') | null;
   part?: (string | null) | Part;
   _h_folders?: (string | null) | Folder;
   _h_tags?: (string | Tag)[] | null;
@@ -423,6 +343,99 @@ export interface Folder {
   createdAt: string;
   _h_slugPath?: string | null;
   _h_titlePath?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  role: 'admin' | 'user';
+  labs?:
+    | {
+        lab: string | Lab;
+        labRole?: ('admin' | 'member') | null;
+        id?: string | null;
+      }[]
+    | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+  apiKey?: string | null;
+  apiKeyLast4?: string | null;
+  apiKeyIndex?: string | null;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: string;
+  _h_tags?: (string | null) | Tag;
+  name: string;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+  _h_slugPath?: string | null;
+  _h_titlePath?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  name: string;
+  parent?: (string | null) | Category;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Category;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  createdBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedBy?: {
+    relationTo: 'users';
+    value: string | User;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * Read-only view of what is where. Change it by recording a stock movement.
@@ -815,6 +828,13 @@ export interface PartsSelect<T extends boolean = true> {
   model3d?: T;
   kicadSymbol?: T;
   kicadFootprint?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
   notes?: T;
   shared?: T;
   stock?: T;
@@ -1070,6 +1090,7 @@ export interface UsersSelect<T extends boolean = true> {
     | T
     | {
         lab?: T;
+        labRole?: T;
         id?: T;
       };
   createdBy?: T;
@@ -1101,6 +1122,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface LabsSelect<T extends boolean = true> {
   name?: T;
+  theme?: T;
+  logo?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
